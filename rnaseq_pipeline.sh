@@ -77,7 +77,7 @@ echo align_jid $align_jid
 #tx quant
 salmon_jid=$(parse_jid "$($qsub_cmd -d $align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam)")
 echo $salmon_jid
-suppa2_jid=$(parse_jid "$($qsub_cmd -hold_jid $salmon_jid -N suppa2 $SCRIPTS/run_suppa2.sh $salmon_out)")
+suppa2_jid=$(parse_jid "$($qsub_cmd -hold_jid $salmon_jid -J suppa2 $SCRIPTS/run_suppa2.sh $salmon_out)")
 echo $suppa2_jid
 #sort and index
 index_jid=$(parse_jid "$($qsub_cmd -hold_jid $align_jid $SCRIPTS/run_bam_sort_index.sh $out_bam)")
@@ -92,9 +92,9 @@ echo $exact_jid
 
 
 #cleanup #currently omitted, run_cmd.sh not updated for SLURM and only critical for bulk processing
-#$qsub_cmd -hold_jid $salmon_jid -N cleanup_tx_bam $SCRIPTS/run_cmd.sh "if [ -d $salmon_out ]; then rm $tx_bam; fi"
-#$qsub_cmd -hold_jid $featr_jid,$exact_jid,$subst_jid -N cleanup_bams $SCRIPTS/run_cmd.sh "if [ -s $featr_out ]; then rm $sort_bam; rm ${sort_bam}.bai; fi;"
-#$qsub_cmd -hold_jid  $salmon_jid,$featr_jid,$exact_jid,$subst_jid -N finalize $SCRIPTS/run_cmd.sh "date > ${align_path}/${root}.complete"
+#$qsub_cmd -hold_jid $salmon_jid -J cleanup_tx_bam $SCRIPTS/run_cmd.sh "if [ -d $salmon_out ]; then rm $tx_bam; fi"
+#$qsub_cmd -hold_jid $featr_jid,$exact_jid,$subst_jid -J cleanup_bams $SCRIPTS/run_cmd.sh "if [ -s $featr_out ]; then rm $sort_bam; rm ${sort_bam}.bai; fi;"
+#$qsub_cmd -hold_jid  $salmon_jid,$featr_jid,$exact_jid,$subst_jid -J finalize $SCRIPTS/run_cmd.sh "date > ${align_path}/${root}.complete"
 
 
 
