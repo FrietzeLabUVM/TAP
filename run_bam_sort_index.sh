@@ -14,10 +14,12 @@
 
 b=$1
 if [ -z $b ]; then echo bam file expected as arg1, quit.; exit 1; fi
-if [ ! -f $b ]; then echo bam file $b not found! quit.; exit 1; fi
 
 ob=${b/.Aligned.out.bam/""}.Aligned.sortedByCoord.out.bam
 if [ -f $ob ]; then echo sorted bam file $ob found! rm to rerun; exit 0; fi
+
+if [ ! -f $b ]; then echo bam file $b not found! quit.; exit 1; fi
+
 if [ -f ${ob}.bai ]; then rm ${ob}.bai; fi
 mkdir -p ~/tmp
 samtools sort -T ~/tmp -o $ob $b

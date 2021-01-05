@@ -9,6 +9,8 @@ while [[ "$#" -gt 0 ]]; do
         -p|--prefix) root="$2"; shift ;;
         -wd|--workdir) align_path="$2"; shift ;;
         -idx|--starindex) star_idx="$2"; shift ;;
+        -g|--gtf) gtf="$2"; shift ;;
+        -fa|--fasta) fasta="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -16,6 +18,8 @@ done
 
 if [ -z $star_idx ]; then echo need star index location for -idx; exit 1; fi
 if [ -z $F1 ]; then echo need fastq1 as -f1; exit 1; fi
+if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
+if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
 #if [ -z $align_path ]; then echo need alignment output path as -wd; exit 1; fi
 
 SCRIPTS=/users/j/r/jrboyd/dbgap_scripts/vacc_scripts
@@ -66,10 +70,8 @@ if [ -f ${align_path}/${root}.complete ]; then
   echo delete ${align_path}/${root}.complete to rerun. quitting.
   exit 0
 else
-  echo no completion file, starting run for ${align_path}/${root}
+  echo no completion file found, starting run for ${align_path}/${root}
 fi
-
-exit 0
 
 date > ${align_path}/${root}.start
 
@@ -80,7 +82,7 @@ align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
 #tx quant
-salmon_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam)")
+salmon_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam $gtf)")
 echo $salmon_jid
 suppa2_jid=$(parse_jid "$($qsub_cmd -d afterok:$salmon_jid -J suppa2 $SCRIPTS/run_suppa2.sh $salmon_out)")
 echo $suppa2_jid
@@ -88,8 +90,8 @@ echo $suppa2_jid
 index_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J bsortindex $SCRIPTS/run_bam_sort_index.sh $out_bam)")
 echo $index_jid
 #counting
-featr_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J featureCounts $SCRIPTS/run_featureCounts.sh $sort_bam)")
-exact_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J exactSNP $SCRIPTS/run_exactSNP.all.sh $sort_bam)")
+featr_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J featureCounts $SCRIPTS/run_featureCounts.sh $sort_bam $gtf)")
+exact_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J exactSNP $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta)")
 
 #subsetting bams to a region of interest is useful if only specific genes are relevant for tracks etc.
 #subst_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J subset_bam $SCRIPTS/run_ikaros_subset_bam.sh $sort_bam)")
