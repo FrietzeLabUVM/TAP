@@ -7,13 +7,16 @@ while [[ "$#" -gt 0 ]]; do
         -f1|--fastq1) F1="$2"; shift ;;
         -f2|--fastq2) F2="$2"; shift ;;
         -p|--prefix) root="$2"; shift ;;
-        -o|--out) align_path="$2"; shift ;;
-        -wd|--workdir) wd="$2"; shift ;;
+        -wd|--workdir) align_path="$2"; shift ;;
         -idx|--starindex) star_idx="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
+
+if [ -z $star_idx ]; then echo need star index location for -idx; exit 1; fi
+if [ -z $F1 ]; then echo need fastq1 as -f1; exit 1; fi
+#if [ -z $align_path ]; then echo need alignment output path as -wd; exit 1; fi
 
 SCRIPTS=/users/j/r/jrboyd/dbgap_scripts/vacc_scripts
 
@@ -30,8 +33,8 @@ suf_align_stats=".Log.final.out"
 suf_featr_count=".Aligned.sortedByCoord.out.featureCounts.txt"
 
 #output locations
-if [ -z align_path ]; then align_path=~/scratch/alignment_RNA-seq
-if [ -z root ]; then root=${F1/$suf_gz1/""}; fi
+if [ -z $align_path ]; then align_path=~/scratch/alignment_RNA-seq; echo using default alignment output path of $align_path; fi
+if [ -z $root ]; then root=$(basename $F1 $suf_gz1); echo guessing root prefix is $root. provide with -p if incorrect;  fi
 log_path=${align_path}/${root}.logs
 
 #all must exist
@@ -63,29 +66,33 @@ if [ -f ${align_path}/${root}.complete ]; then
   echo delete ${align_path}/${root}.complete to rerun. quitting.
   exit 0
 else
-  echo no completiong file, starting run for ${align_path}/${root}
+  echo no completion file, starting run for ${align_path}/${root}
 fi
+
+exit 0
 
 date > ${align_path}/${root}.start
 
 #align script
-align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path)
+align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_idx)
 echo align_qsub $align_qsub
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
 #tx quant
-salmon_jid=$(parse_jid "$($qsub_cmd -d $align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam)")
+salmon_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam)")
 echo $salmon_jid
-suppa2_jid=$(parse_jid "$($qsub_cmd -hold_jid $salmon_jid -J suppa2 $SCRIPTS/run_suppa2.sh $salmon_out)")
+suppa2_jid=$(parse_jid "$($qsub_cmd -d afterok:$salmon_jid -J suppa2 $SCRIPTS/run_suppa2.sh $salmon_out)")
 echo $suppa2_jid
 #sort and index
-index_jid=$(parse_jid "$($qsub_cmd -hold_jid $align_jid $SCRIPTS/run_bam_sort_index.sh $out_bam)")
+index_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J bsortindex $SCRIPTS/run_bam_sort_index.sh $out_bam)")
 echo $index_jid
 #counting
-featr_jid=$(parse_jid "$($qsub_cmd -hold_jid $index_jid $SCRIPTS/run_featureCounts.sh $sort_bam)")
-exact_jid=$(parse_jid "$($qsub_cmd -hold_jid $index_jid $SCRIPTS/run_exactSNP.all.sh $sort_bam)")
-subst_jid=$(parse_jid "$($qsub_cmd -hold_jid $index_jid $SCRIPTS/run_ikaros_subset_bam.sh $sort_bam)")
+featr_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J featureCounts $SCRIPTS/run_featureCounts.sh $sort_bam)")
+exact_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J exactSNP $SCRIPTS/run_exactSNP.all.sh $sort_bam)")
+
+#subsetting bams to a region of interest is useful if only specific genes are relevant for tracks etc.
+#subst_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J subset_bam $SCRIPTS/run_ikaros_subset_bam.sh $sort_bam)")
 
 echo $featr_jid
 echo $exact_jid
