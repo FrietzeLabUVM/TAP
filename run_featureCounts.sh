@@ -1,6 +1,9 @@
 #!/bin/bash
 #$ -cwd
 #$ -N featureCounts
+
+echo $0 $@
+
 bam=$1
 gtf=$2
 if [ -z $bam ]; then echo must have bam file as arg1. quit.; exit 1; fi

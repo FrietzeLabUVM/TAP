@@ -8,7 +8,9 @@ while [[ "$#" -gt 0 ]]; do
         -f2|--fastq2) F2="$2"; shift ;;
         -p|--prefix) root="$2"; shift ;;
         -wd|--workdir) align_path="$2"; shift ;;
-        -idx|--starindex) star_idx="$2"; shift ;;
+        -ref|--reference) ref="$2"; shift ;;
+        -idx|--starindex) star_index="$2"; shift ;;
+        -s|--supparef) suppa_ref="$2"; shift ;; 
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -16,10 +18,10 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-if [ -z $star_idx ]; then echo need star index location for -idx; exit 1; fi
+#if [ -z $ref ]; then echo need star index location for -idx; exit 1; fi
 if [ -z $F1 ]; then echo need fastq1 as -f1; exit 1; fi
-if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
-if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
+#if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
+#if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
 #if [ -z $align_path ]; then echo need alignment output path as -wd; exit 1; fi
 
 SCRIPTS=/users/j/r/jrboyd/dbgap_scripts/vacc_scripts
@@ -35,6 +37,26 @@ suf_salmon_quant=".salmon_quant"
 suf_log=".Log.out"
 suf_align_stats=".Log.final.out"
 suf_featr_count=".Aligned.sortedByCoord.out.featureCounts.txt"
+
+#star_index=$ref/STAR_INDEX
+#suppa_ref=$ref/SUPPA2
+if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
+if [ ! -d $star_index ]; then star_index $star_index not found! exit 1; fi
+if [ -z $suppa_ref ]; then suppa_ref=$ref/SUPPA2; echo guessing suppa_ref as $suppa_ref; fi
+if [ ! -d $suppa_ref ]; then suppa_ref $suppa_ref not found! exit 1; fi
+if [ -z $gtf ]; then gtf=$(readlink -m -f $ref/GTF/current.gtf); echo guessing gtf as $gtf; fi
+if [ ! -f $gtf ]; then echo gtf $gtf not found! exit; exit 1; fi
+if [ -z $fasta ]; then fasta=$(readlink -m -f $ref/FASTA/genome.fa); echo guessing fasta as $fasta; fi
+if [ ! -f $fasta ]; then echo fasta $fasta not found! exit; exit 1; fi
+if [ -z $tx ]; then tx=$(readlink -m -f $ref/FASTA/transcriptome.fa); echo guessing transcriptome fasta as $tx; fi
+if [ ! -f $tx ]; then echo transcriptome fasta $tx not found! exit; exit 1; fi
+
+for d in $star_index $suppa_ref; do
+  if [ ! -d $d ]; then
+    echo reference location $d must exists! exit
+    exit 1
+  fi
+done
 
 #output locations
 if [ -z $align_path ]; then align_path=~/scratch/alignment_RNA-seq; echo using default alignment output path of $align_path; fi
@@ -75,16 +97,18 @@ fi
 
 date > ${align_path}/${root}.start
 
+$qsub_cmd echo_submission.sh $0 $#
+
 #align script
-align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_idx)
+align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index)
 echo align_qsub $align_qsub
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
 #tx quant
-salmon_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam $gtf)")
+salmon_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam $tx)")
 echo $salmon_jid
-suppa2_jid=$(parse_jid "$($qsub_cmd -d afterok:$salmon_jid -J suppa2 $SCRIPTS/run_suppa2.sh $salmon_out)")
+suppa2_jid=$(parse_jid "$($qsub_cmd -d afterok:$salmon_jid -J suppa2 $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref)")
 echo $suppa2_jid
 #sort and index
 index_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J bsortindex $SCRIPTS/run_bam_sort_index.sh $out_bam)")
@@ -105,5 +129,5 @@ echo $exact_jid
 #$qsub_cmd -hold_jid $featr_jid,$exact_jid,$subst_jid -J cleanup_bams $SCRIPTS/run_cmd.sh "if [ -s $featr_out ]; then rm $sort_bam; rm ${sort_bam}.bai; fi;"
 #$qsub_cmd -hold_jid  $salmon_jid,$featr_jid,$exact_jid,$subst_jid -J finalize $SCRIPTS/run_cmd.sh "date > ${align_path}/${root}.complete"
 
-
+$qsub_cmd -d afterok:$salmon_jid:$suppa2_jid:$featr_jid:$exact_jid -J completion $SCRIPTS/write_completion.sh ${align_path}/${root}
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 #$ -cwd
 #$ -N exactSNP
-#py=/slipstream/home/dbgap/anaconda3/bin/python3
+echo $0 $@
+
 bam=$1
 fasta=$2
 if [ -z $bam ]; then echo must have bam file as arg1. quit.; exit 1; fi

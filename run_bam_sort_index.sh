@@ -11,6 +11,7 @@
 #SBATCH -e index_bam_%j.err                 # File to which STDERR will be written, including job ID
 #SBATCH --mail-user=jrboyd@med.uvm.edu   # Email to which notifications will be sent
 
+echo $0 $@
 
 b=$1
 if [ -z $b ]; then echo bam file expected as arg1, quit.; exit 1; fi

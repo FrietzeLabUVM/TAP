@@ -14,6 +14,8 @@
 #alignment script for dbgap data
 #assumes data is paired end fastq.gz and files end in _R1_001.fastq.gz
 
+echo $0 $@
+
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -f1|--fastq1) F1="$2"; shift ;;
