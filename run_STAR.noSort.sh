@@ -40,8 +40,8 @@ if [ -z $F2 ]; then F2=${F1/_R1/_R2}; if [ ! -f $F2 ]; then echo "attempt at gue
 if [ ! -f $F2 ]; then echo "read2 fastq file, $F2, not found! stop"; exit 1; fi
 
 #B=$3
-if [ -z $B ]; then B=$wd/$(basename ${F1/_R1_001.fastq.gz/""}); fi
-
+if [ -z $B ]; then B=$(basename ${F1/_R1_001.fastq.gz/""}); fi
+B=$wd/$(basename $B)
 
 
 echo read1 fastq is $F1

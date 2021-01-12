@@ -25,4 +25,4 @@ if [ $out == ${bam}.salmon_quant ]; then
 fi
 
 if [ -d $out ]; then echo output $out already exists, will not rerun.; exit 0; fi
-salmon quant -p 2 -t $gtf -l ISR -a $bam -o $out --gencode
+salmon quant -p 2 -t $gtf -l A -a $bam -o $out --gencode

@@ -7,7 +7,7 @@ while [[ "$#" -gt 0 ]]; do
         -f1|--fastq1) F1="$2"; shift ;;
         -f2|--fastq2) F2="$2"; shift ;;
         -p|--prefix) root="$2"; shift ;;
-        -wd|--workdir) align_path="$2"; shift ;;
+        -o|--outdir) align_path="$2"; shift ;;
         -ref|--reference) ref="$2"; shift ;;
         -idx|--starindex) star_index="$2"; shift ;;
         -s|--supparef) suppa_ref="$2"; shift ;; 
@@ -22,7 +22,7 @@ done
 if [ -z $F1 ]; then echo need fastq1 as -f1; exit 1; fi
 #if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
 #if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
-#if [ -z $align_path ]; then echo need alignment output path as -wd; exit 1; fi
+#if [ -z $align_path ]; then echo need alignment output path as -o; exit 1; fi
 
 SCRIPTS=/users/j/r/jrboyd/dbgap_scripts/vacc_scripts
 
@@ -100,7 +100,7 @@ date > ${align_path}/${root}.start
 $qsub_cmd echo_submission.sh $0 $#
 
 #align script
-align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index)
+align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root)
 echo align_qsub $align_qsub
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
