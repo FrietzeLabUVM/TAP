@@ -4,11 +4,6 @@ cfg=DM6_AA_config.csv
 ref=~/lab_shared/indexes/DM6
 out=~/lab_shared/AA_DM6_by_config
 
-#for f in $input/*/*_R1_001.fastq.gz; do
-#  echo $f;
-#  bash rnaseq_pipeline.sh -f1 $f -ref $ref
-#done
-
 todo=$(cat $cfg)
 for l in $todo; do 
   f1=$(echo $l | awk -v FS="," '{print $1}'); 

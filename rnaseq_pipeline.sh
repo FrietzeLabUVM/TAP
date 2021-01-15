@@ -6,11 +6,12 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         -f1|--fastq1) F1="$2"; shift ;;
         -f2|--fastq2) F2="$2"; shift ;;
-        -p|--prefix) root="$2"; shift ;;
-        -o|--outdir) align_path="$2"; shift ;;
+        -i|--inDir) in_path="$2"; shift ;;
+        -p|--outPrefix) root="$2"; shift ;;
+        -o|--outDir) align_path="$2"; shift ;;
         -ref|--reference) ref="$2"; shift ;;
-        -idx|--starindex) star_index="$2"; shift ;;
-        -s|--supparef) suppa_ref="$2"; shift ;; 
+        -idx|--starIndex) star_index="$2"; shift ;;
+        -s|--suppaRef) suppa_ref="$2"; shift ;; 
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -19,7 +20,9 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 #if [ -z $ref ]; then echo need star index location for -idx; exit 1; fi
-if [ -z $F1 ]; then echo need fastq1 as -f1; exit 1; fi
+if [ -z $F1 ]; then echo need fastq1 as -f1! quit; exit 1; fi
+if [ ! -z $in_path ]; then F1=${in_path}/${F1}; fi
+if [ ! -f $F1 ]; then echo fastq1 $F1 could not be found! quit; exit 1; fi
 #if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
 #if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
 #if [ -z $align_path ]; then echo need alignment output path as -o; exit 1; fi
