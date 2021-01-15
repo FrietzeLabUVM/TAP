@@ -6,6 +6,8 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         -f1|--fastq1) F1="$2"; shift ;;
         -f2|--fastq2) F2="$2"; shift ;;
+        -f1s|--f1_suffix) F1_suff="$2"; shift ;;
+        -f2s|--f2_suffix) F2_suff="$2"; shift ;;
         -i|--inDir) in_path="$2"; shift ;;
         -p|--outPrefix) root="$2"; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
@@ -30,8 +32,10 @@ if [ ! -f $F1 ]; then echo fastq1 $F1 could not be found! quit; exit 1; fi
 SCRIPTS=/users/j/r/jrboyd/dbgap_scripts/vacc_scripts
 
 #relevant suffixes
-suf_gz1="_R1_001.fastq.gz"
-suf_gz2="_R2_001.fastq.gz"
+if [ -z $F1_suff ]; then F1_suff="_R1_001.fastq.gz"; fi
+if [ -z $F2_suff ]; then F2_suff="_R2_001.fastq.gz"; fi
+suf_gz1="$F1_suff"
+suf_gz2="$F2_suff"
 suf_out_bam=".Aligned.out.bam"
 suf_tx_bam=".Aligned.toTranscriptome.out.bam"
 suf_sort_bam=".Aligned.sortedByCoord.out.bam"

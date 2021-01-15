@@ -1,4 +1,8 @@
 #!/bin/bash
+
+SCRIPT_PATH=$(dirname "$(readlink -f "$0")")
+#echo $SCRIPT_PATH
+
 #parameters parsing
 #1 get config param if specified
 #2 if config, parse params
@@ -47,7 +51,7 @@ while [[ "$#" -gt 0 ]]; do
         -c|--config) shift ;;
         -f1s|--f1_suffix) F1_suff="$2"; shift ;;
         -f2s|--f2_suffix) F2_suff="$2"; shift ;;
-        -i|--inDir) input="$2"; if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 1; fi; ;;
+        -i|--inDir) input="$2"; shift ;;
         -p|--outPrefix) root="$2"; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
         -ref|--reference) ref="$2"; shift ;;
@@ -65,7 +69,6 @@ if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
 
 #check validity, must have input and (ref or all of idx,s,g,fa)
-
 if [ -z $input ]; then echo input directory to find fastq in was never set, using current directory. use -i \(--inDir\) to specify.; input=$(pwd); fi;
 if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 1; fi;
 
@@ -73,11 +76,26 @@ if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 
 #build final command
 if [ ! -z $F1_suff ]; then cmd="$cmd --f1_suffix $F1_suff"; fi
 if [ ! -z $F2_suff ]; then cmd="$cmd --f2_suffix $F2_suff"; fi
+if [ ! -z $root ]; then cmd="$cmd --outPrefix $root"; fi
+if [ ! -z $align_path ]; then cmd="$cmd --outDir $align_path"; fi
+if [ ! -z $ref ]; then cmd="$cmd --reference $ref"; fi
+if [ ! -z $star_index ]; then cmd="$cmd --starIndex $star_index"; fi
+if [ ! -z $suppa_ref ]; then cmd="$cmd --suppaRef $suppa_ref"; fi
+if [ ! -z $gtf ]; then cmd="$cmd --gtf $gtf"; fi
+if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
 
+if [ ! -z $cfg ]; then 
+  todo=$(cat $cfg | awk '/^[^#]/ { print $0 }')
+else
+  todo=$input/*$F1_suff
+fi
 
-for f1 in $input/*$F1_suff; do
-  if [ ! -f $f1 ]; then echo fastq1 was not valid, $f1. quit!; exit 1; fi
-  f2=${f1/$F1_suff/""}$F2_suff
-  echo $f1 $f2
-  #bash rnaseq_pipeline.sh -f1 $f1 -ref $ref
+for f1 in $todo; do
+  if [ ! -f $f1 ]; then f1=$input/$f1; fi
+  if [ ! -f $f1 ]; then echo fastq1 was not found, $f1. quit!; exit 1; fi
+  f2=${f1//$F1_suff/$F2_suff}
+  cmd_full="bash rnaseq_pipeline.sh -f1 $f1 -f2 $f2 $cmd"
+  echo $cmd_full
+  $cmd_full
+  #bash rnaseq_pipeline.sh $cmd -f1 $f1 -ref $ref
 done
