@@ -27,7 +27,7 @@ done
 if [ -z $F1 ]; then echo need fastq1 as -f1! quit; exit 1; fi
 if [ ! -z $in_path ]; then F1=${in_path}/${F1}; fi
 F1=${F1//"&"/" "}
-for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi
+for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
 #if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
 #if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
 #if [ -z $align_path ]; then echo need alignment output path as -o; exit 1; fi
@@ -41,21 +41,24 @@ suf_gz1="$F1_suff"
 suf_gz2="$F2_suff"
 
 if [ $mode = PE ]; then
-  F2=${F1//$suf_gz1/$suf_gz2}
-  for f in $F2; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
-  F1a=($F1)
-  F2a=($F2)
-  if [ ${#F1a[@]} != ${#F2a[@]} ]; then
-    echo Differing numbers of R1 and R2 fastqs supplied! quit
-    echo $F1
-    echo $F2
-    exit 1
-  fi
+ F2=${F1//$suf_gz1/$suf_gz2}
+ #check that all F2 exist
+ for f in $F2; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
+ F1a=($F1)
+ F2a=($F2)
+ #check same number of F1 and F2
+ if [ ${#F1a[@]} != ${#F2a[@]} ]; then
+   echo Differing numbers of R1 and R2 fastqs supplied! quit
+   echo $F1
+   echo $F2
+   exit 1
+ fi
+ #check that F1 and F2 are different
  i=0
  while [ $i -lt ${#F1a[@]} ]; do
-   if [ ${F1[$i]} = ${F2[$i]} ]; then echo problem with fastq pairing. quit; exit 1; fi
+   if [ ${F1a[$i]} = ${F2a[$i]} ]; then echo problem with fastq pairing. quit; exit 1; fi
     i=$(( $i + 1 ))
-  done
+ done
 fi
 
 suf_out_bam=".Aligned.out.bam"
@@ -89,7 +92,7 @@ done
 
 #output locations
 if [ -z $align_path ]; then align_path=~/scratch/alignment_RNA-seq; echo using default alignment output path of $align_path; fi
-if [ -z $root ]; then root=$(basename $F1 $suf_gz1); echo guessing root prefix is $root. provide with -p if incorrect;  fi
+if [ -z $root ]; then root=$(basename $(echo $F1 | awk -v FS=" +" '{print $1}') $suf_gz1); echo guessing root prefix is $root. provide with -p if incorrect;  fi
 log_path=${align_path}/${root}.logs
 
 #all must exist
