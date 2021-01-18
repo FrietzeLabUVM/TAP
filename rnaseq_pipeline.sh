@@ -1,6 +1,7 @@
 #!/bin/bash
 #SLURM pipeline for RNAseq
 
+mode=PE
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -16,6 +17,7 @@ while [[ "$#" -gt 0 ]]; do
         -s|--suppaRef) suppa_ref="$2"; shift ;; 
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
+        -SE) mode=SE; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -24,7 +26,8 @@ done
 #if [ -z $ref ]; then echo need star index location for -idx; exit 1; fi
 if [ -z $F1 ]; then echo need fastq1 as -f1! quit; exit 1; fi
 if [ ! -z $in_path ]; then F1=${in_path}/${F1}; fi
-if [ ! -f $F1 ]; then echo fastq1 $F1 could not be found! quit; exit 1; fi
+F1=${F1//"&"/" "}
+for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi
 #if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
 #if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
 #if [ -z $align_path ]; then echo need alignment output path as -o; exit 1; fi
@@ -36,6 +39,25 @@ if [ -z $F1_suff ]; then F1_suff="_R1_001.fastq.gz"; fi
 if [ -z $F2_suff ]; then F2_suff="_R2_001.fastq.gz"; fi
 suf_gz1="$F1_suff"
 suf_gz2="$F2_suff"
+
+if [ $mode = PE ]; then
+  F2=${F1//$suf_gz1/$suf_gz2}
+  for f in $F2; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
+  F1a=($F1)
+  F2a=($F2)
+  if [ ${#F1a[@]} != ${#F2a[@]} ]; then
+    echo Differing numbers of R1 and R2 fastqs supplied! quit
+    echo $F1
+    echo $F2
+    exit 1
+  fi
+ i=0
+ while [ $i -lt ${#F1a[@]} ]; do
+   if [ ${F1[$i]} = ${F2[$i]} ]; then echo problem with fastq pairing. quit; exit 1; fi
+    i=$(( $i + 1 ))
+  done
+fi
+
 suf_out_bam=".Aligned.out.bam"
 suf_tx_bam=".Aligned.toTranscriptome.out.bam"
 suf_sort_bam=".Aligned.sortedByCoord.out.bam"

@@ -91,10 +91,19 @@ else
 fi
 
 for f1 in $todo; do
-  if [ ! -f $f1 ]; then f1=$input/$f1; fi
-  if [ ! -f $f1 ]; then echo fastq1 was not found, $f1. quit!; exit 1; fi
+  if [ ! -f $f1 ]; then 
+    root=$(echo $f1 | awk -v FS="," '{print $2}');
+    f1=$(echo $f1 | awk -v FS="," '{print $1}'); 
+  fi
+  f1=${f1//"&"/" "}
+  ff1=""
+  for f in $f1; do ff1="$ff1 $input/$(basename $f)"; done
+  #if [ ! -f $f1 ]; then f1=$input/$f1; fi
+  f1=$ff1
+  for f in $f1; do if [ ! -f $f ]; then echo fastq1 was not found, $f. quit!; exit 1; fi; done
+#  if [ ! -f $f1 ]; then echo fastq1 was not found, $f1. quit!; exit 1; fi
   f2=${f1//$F1_suff/$F2_suff}
-  cmd_full="bash rnaseq_pipeline.sh -f1 $f1 -f2 $f2 $cmd"
+  cmd_full="bash rnaseq_pipeline.sh -f1 ${f1//" "/&} -f2 ${f2//" "/&} $cmd"
   echo $cmd_full
   $cmd_full
   #bash rnaseq_pipeline.sh $cmd -f1 $f1 -ref $ref
