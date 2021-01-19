@@ -24,6 +24,7 @@ sub_mode=sbatch
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
   args=$(cat $cfg | awk -v cfg_prefix="#CFG" -v ORS=" " '{if ($1 == cfg_prefix){$1 = ""; print $0}}')
+  args="${args//\~/$HOME}"
   if [ ! -z "$args" ]; then
     echo $args
     set -- $args

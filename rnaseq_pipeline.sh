@@ -13,7 +13,7 @@ while [[ "$#" -gt 0 ]]; do
         -i|--inDir) in_path="$2"; shift ;;
         -p|--outPrefix) root="$2"; echo root is $root; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
-        -ref|--reference) ref=$2; echo seeing ref as $ref; echo "$ref"; shift ;;
+        -ref|--reference) ref=$2; shift ;;
         -idx|--starIndex) star_index="$2"; shift ;;
         -s|--suppaRef) suppa_ref="$2"; shift ;; 
         -g|--gtf) gtf="$2"; shift ;;
@@ -75,10 +75,6 @@ suf_featr_count=".Aligned.sortedByCoord.out.featureCounts.txt"
 #star_index=$ref/STAR_INDEX
 #suppa_ref=$ref/SUPPA2
 if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
-pwd
-echo ~
-echo ">>>"$star_index"<<<"
-ls -lha $star_index
 if [ ! -d $star_index ]; then echo star_index $star_index not found!; exit 1; fi
 if [ -z $suppa_ref ]; then suppa_ref=$ref/SUPPA2; echo guessing suppa_ref as $suppa_ref; fi
 if [ ! -d $suppa_ref ]; then echo suppa_ref $suppa_ref not found!; exit 1; fi
