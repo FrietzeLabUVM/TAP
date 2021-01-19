@@ -45,7 +45,7 @@ suf_gz2="$F2_suff"
 if [ $mode = PE ]; then
  F2=${F1//$suf_gz1/$suf_gz2}
  #check that all F2 exist
- for f in $F2; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
+ for f in $F2; do if [ ! -f $f ]; then echo fastq2 $f could not be found! quit; exit 1; fi; done
  F1a=($F1)
  F2a=($F2)
  #check same number of F1 and F2
@@ -119,10 +119,10 @@ parse_jid () { #parses the job id from output of qsub
         echo $JOBID;
 }
 
-if [ $sub_mode != "sbatch" ] & [ $sub_mode != "bash" ]; then echo sub_mode was $sub_mode, not one of sbatch or bash. quit!; exit 1; fi
+if [ $sub_mode != "sbatch" ] && [ $sub_mode != "bash" ]; then echo sub_mode was $sub_mode, not one of sbatch or bash. quit!; exit 1; fi
 if [ $sub_mode = "sbatch" ]; then 
   qsub_cmd="sbatch -o $log_path/%x.%j.out -e $log_path/%x.%j.error"
-else if [ $sub_mode = "bash" ]; then
+elif [ $sub_mode = "bash" ]; then
   qsub_cmd="bash"
 fi
 
@@ -139,6 +139,9 @@ date > ${align_path}/${root}.start
 $qsub_cmd echo_submission.sh $0 $#
 
 #align script
+echo $F1
+F1=${F1//" "/"&"}
+echo $F1
 align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root)
 echo align_qsub $align_qsub
 align_jid=$(parse_jid "$align_qsub")

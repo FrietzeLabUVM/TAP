@@ -18,6 +18,9 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+read_mode=PE
+sub_mode=sbatch
+
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
   args=$(cat $cfg | awk -v cfg_prefix="#CFG" -v ORS=" " '{if ($1 == cfg_prefix){$1 = ""; print $0}}')
@@ -37,6 +40,8 @@ if [ ! -z $cfg ]; then
 	-s|--suppaRef) suppa_ref="$2"; shift ;;
 	-g|--gtf) gtf="$2"; shift ;;
 	-fa|--fasta) fasta="$2"; shift ;;
+        -SE|--SE) read_mode=SE; shift ;;
+        -noSub|--noSub) sub_mode=bash; shift ;;
 	*) echo "Unknown parameter passed: $1"; exit 1 ;;
       esac
       shift
@@ -59,6 +64,8 @@ while [[ "$#" -gt 0 ]]; do
         -s|--suppaRef) suppa_ref="$2"; shift ;;
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
+        -SE|--SE) read_mode=SE; shift ;;
+        -noSub|--noSub) sub_mode=bash; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -74,6 +81,7 @@ if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 
 
 
 #build final command
+cmd=""
 if [ ! -z $F1_suff ]; then cmd="$cmd --f1_suffix $F1_suff"; fi
 if [ ! -z $F2_suff ]; then cmd="$cmd --f2_suffix $F2_suff"; fi
 if [ ! -z $root ]; then cmd="$cmd --outPrefix $root"; fi
@@ -83,6 +91,8 @@ if [ ! -z $star_index ]; then cmd="$cmd --starIndex $star_index"; fi
 if [ ! -z $suppa_ref ]; then cmd="$cmd --suppaRef $suppa_ref"; fi
 if [ ! -z $gtf ]; then cmd="$cmd --gtf $gtf"; fi
 if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
+if [ $read_mode = SE ]; then cmd="$cmd -SE"; fi
+if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi 
 
 if [ ! -z $cfg ]; then 
   todo=$(cat $cfg | awk '/^[^#]/ { print $0 }')
@@ -97,7 +107,7 @@ for f1 in $todo; do
   fi
   f1=${f1//"&"/" "}
   ff1=""
-  for f in $f1; do ff1="$ff1 $input/$(basename $f)"; done
+  for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   #if [ ! -f $f1 ]; then f1=$input/$f1; fi
   f1=$ff1
   for f in $f1; do if [ ! -f $f ]; then echo fastq1 was not found, $f. quit!; exit 1; fi; done
