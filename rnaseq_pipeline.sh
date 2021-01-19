@@ -2,6 +2,7 @@
 #SLURM pipeline for RNAseq
 
 mode=PE
+sub_mode=sbatch
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -17,7 +18,8 @@ while [[ "$#" -gt 0 ]]; do
         -s|--suppaRef) suppa_ref="$2"; shift ;; 
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
-        -SE) mode=SE; shift ;;
+        -SE|--SE) mode=SE; shift ;;
+        -noSub|--noSub) sub_mode=bash; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -117,7 +119,12 @@ parse_jid () { #parses the job id from output of qsub
         echo $JOBID;
 }
 
-qsub_cmd="sbatch -o $log_path/%x.%j.out -e $log_path/%x.%j.error"
+if [ $sub_mode != "sbatch" ] & [ $sub_mode != "bash" ]; then echo sub_mode was $sub_mode, not one of sbatch or bash. quit!; exit 1; fi
+if [ $sub_mode = "sbatch" ]; then 
+  qsub_cmd="sbatch -o $log_path/%x.%j.out -e $log_path/%x.%j.error"
+else if [ $sub_mode = "bash" ]; then
+  qsub_cmd="bash"
+fi
 
 if [ -f ${align_path}/${root}.complete ]; then 
   echo completion file found!
@@ -138,16 +145,27 @@ align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
 #tx quant
-salmon_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J salmon_quant $SCRIPTS/run_salmon_quant.sh $tx_bam $tx)")
+salmon_sub_args="-d afterok:$align_jid -J salmon_quant"
+if [ $sub_mode = "bash" ]; then salmon_sub_args=""; fi
+salmon_jid=$(parse_jid "$($qsub_cmd $salmon_sub_args $SCRIPTS/run_salmon_quant.sh $tx_bam $tx)")
 echo $salmon_jid
-suppa2_jid=$(parse_jid "$($qsub_cmd -d afterok:$salmon_jid -J suppa2 $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref)")
+suppa2_sub_args="-d afterok:$salmon_jid -J suppa2"
+if [ $sub_mode = "bash" ]; then suppa2_sub_args=""; fi
+suppa2_jid=$(parse_jid "$($qsub_cmd $suppa2_sub_args $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref)")
 echo $suppa2_jid
 #sort and index
-index_jid=$(parse_jid "$($qsub_cmd -d afterok:$align_jid -J bsortindex $SCRIPTS/run_bam_sort_index.sh $out_bam)")
+index_sub_args="-d afterok:$align_jid -J bsortindex"
+if [ $sub_mode = "bash" ]; then index_sub_args=""; fi
+index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam)")
 echo $index_jid
+
 #counting
-featr_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J featureCounts $SCRIPTS/run_featureCounts.sh $sort_bam $gtf)")
-exact_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J exactSNP $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta)")
+featureCounts_sub_args="-d afterok:$index_jid -J featureCounts"
+if [ $sub_mode = "bash" ]; then featureCounts_sub_args=""; fi
+featr_jid=$(parse_jid "$($qsub_cmd $featureCounts_sub_args $SCRIPTS/run_featureCounts.sh $sort_bam $gtf)")
+exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
+if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
+exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta)")
 
 #subsetting bams to a region of interest is useful if only specific genes are relevant for tracks etc.
 #subst_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J subset_bam $SCRIPTS/run_ikaros_subset_bam.sh $sort_bam)")
@@ -161,5 +179,7 @@ echo $exact_jid
 #$qsub_cmd -hold_jid $featr_jid,$exact_jid,$subst_jid -J cleanup_bams $SCRIPTS/run_cmd.sh "if [ -s $featr_out ]; then rm $sort_bam; rm ${sort_bam}.bai; fi;"
 #$qsub_cmd -hold_jid  $salmon_jid,$featr_jid,$exact_jid,$subst_jid -J finalize $SCRIPTS/run_cmd.sh "date > ${align_path}/${root}.complete"
 
-$qsub_cmd -d afterok:$salmon_jid:$suppa2_jid:$featr_jid:$exact_jid -J completion $SCRIPTS/write_completion.sh ${align_path}/${root}
+completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$featr_jid:$exact_jid -J completion"
+if [ $sub_mode = "bash" ]; then completion_sub_args=""; fi
+$qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root}
 
