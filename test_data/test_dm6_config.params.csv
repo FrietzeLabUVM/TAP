@@ -1,4 +1,4 @@
-#CFG -ref /users/j/r/jrboyd/dbgap_scripts/vacc_scripts/DM6 -o test_alignment_params
+#CFG -ref ~/lab_shared/indexes/DM6 -o test_alignment.params
 #regular comment, not used
 #CFG -i test_data
 test_dm6_1_R1_001.fastq.gz

@@ -11,15 +11,15 @@ while [[ "$#" -gt 0 ]]; do
         -f1s|--f1_suffix) F1_suff="$2"; shift ;;
         -f2s|--f2_suffix) F2_suff="$2"; shift ;;
         -i|--inDir) in_path="$2"; shift ;;
-        -p|--outPrefix) root="$2"; shift ;;
+        -p|--outPrefix) root="$2"; echo root is $root; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
-        -ref|--reference) ref="$2"; shift ;;
+        -ref|--reference) ref=$2; echo seeing ref as $ref; echo "$ref"; shift ;;
         -idx|--starIndex) star_index="$2"; shift ;;
         -s|--suppaRef) suppa_ref="$2"; shift ;; 
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
-        -SE|--SE) mode=SE; shift ;;
-        -noSub|--noSub) sub_mode=bash; shift ;;
+        -SE|--SE) mode=SE ;;
+        -noSub|--noSub) sub_mode=bash ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -75,9 +75,13 @@ suf_featr_count=".Aligned.sortedByCoord.out.featureCounts.txt"
 #star_index=$ref/STAR_INDEX
 #suppa_ref=$ref/SUPPA2
 if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
-if [ ! -d $star_index ]; then star_index $star_index not found! exit 1; fi
+pwd
+echo ~
+echo ">>>"$star_index"<<<"
+ls -lha $star_index
+if [ ! -d $star_index ]; then echo star_index $star_index not found!; exit 1; fi
 if [ -z $suppa_ref ]; then suppa_ref=$ref/SUPPA2; echo guessing suppa_ref as $suppa_ref; fi
-if [ ! -d $suppa_ref ]; then suppa_ref $suppa_ref not found! exit 1; fi
+if [ ! -d $suppa_ref ]; then echo suppa_ref $suppa_ref not found!; exit 1; fi
 if [ -z $gtf ]; then gtf=$(readlink -m -f $ref/GTF/current.gtf); echo guessing gtf as $gtf; fi
 if [ ! -f $gtf ]; then echo gtf $gtf not found! exit; exit 1; fi
 if [ -z $fasta ]; then fasta=$(readlink -m -f $ref/FASTA/genome.fa); echo guessing fasta as $fasta; fi
