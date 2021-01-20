@@ -1,3 +1,5 @@
 test_dm6_1_R1_001.fastq.gz&test_dm6_2_R1_001.fastq.gz,pool_1and2
 test_dm6_3_R1_001.fastq.gz,unpool_3
 test_dm6_1_R1_001.fastq.gz&test_dm6_2_R1_001.fastq.gz&test_dm6_3_R1_001.fastq.gz,pool_all
+#delim by space is not supported, must be &
+#test_dm6_1_R1_001.fastq.gz test_dm6_2_R1_001.fastq.gz test_dm6_3_R1_001.fastq.gz,pool_allSpace

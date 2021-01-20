@@ -82,7 +82,7 @@ if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 
 #build final command
 cmd=""
 if [ ! -z $F1_suff ]; then cmd="$cmd --f1_suffix $F1_suff"; fi
-if [ ! -z $F2_suff ]; then cmd="$cmd --f2_suffix $F2_suff"; fi
+if [ ! -z $F2_suff ] && [ $read_mode != SE ] ; then cmd="$cmd --f2_suffix $F2_suff"; fi
 if [ ! -z $root ]; then cmd="$cmd --outPrefix $root"; fi
 if [ ! -z $align_path ]; then cmd="$cmd --outDir $align_path"; fi
 if [ ! -z $ref ]; then cmd="$cmd --reference $ref"; fi
@@ -96,24 +96,36 @@ if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi
 cmd=${cmd/" "/""}
 
 if [ ! -z $cfg ]; then 
-  todo=$(cat $cfg | awk '/^[^#]/ { print $0 }')
+  todo=$(cat $cfg | awk '/^[^#]/ {print $0 }')
 else
   todo=$input/*$F1_suff
 fi
 
+echo $todo
+
 for f1 in $todo; do
   if [ ! -f $f1 ]; then 
     root=$(echo $f1 | awk -v FS="," '{print $2}');
-    f1=$(echo $f1 | awk -v FS="," '{print $1}'); 
+    f1=$(echo $f1 | awk -v FS="," '{print $1}');# | awk -v FS=" " -v OFS="&" '$1=$1; {print $0}');
   fi
+  #echo $f1
+  #f1=${f1//" "/"&"}
+  #echo $f1
   f1=${f1//"&"/" "}
+  #echo $f1
+  #exit 0
   ff1=""
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   #if [ ! -f $f1 ]; then f1=$input/$f1; fi
   f1=$ff1
   for f in $f1; do if [ ! -f $f ]; then echo fastq1 was not found, $f. quit!; exit 1; fi; done
-  f2=${f1//$F1_suff/$F2_suff}
-  cmd_full="bash rnaseq_pipeline.sh -f1 ${f1//" "/&} -f2 ${f2//" "/&} $cmd"
+  if [ $read_mode != SE ]; then
+    f2=${f1//$F1_suff/$F2_suff}
+    for f in $f2; do if [ ! -f $f ]; then echo fastq2 was not found, $f. quit!; exit 1; fi; done
+    cmd_full="bash rnaseq_pipeline.sh -f1 ${f1//" "/&} -f2 ${f2//" "/&} $cmd"
+  else
+    cmd_full="bash rnaseq_pipeline.sh -f1 ${f1//" "/&} $cmd"
+  fi
   if [ ! -z $root ]; then cmd_full="$cmd_full --outPrefix $root"; fi
   echo $cmd_full
   $cmd_full

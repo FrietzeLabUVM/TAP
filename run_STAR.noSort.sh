@@ -9,12 +9,12 @@
 #SBATCH -e star_pe_%j.err                 # File to which STDERR will be written, including job ID
 #SBATCH --mail-user=jrboyd@med.uvm.edu   # Email to which notifications will be sent
 
-
-
-#alignment script for dbgap data
+#alignment script developed for dbgap data, uses ENCODE standards
 #assumes data is paired end fastq.gz and files end in _R1_001.fastq.gz
 
 echo $0 $@
+
+mode=PE
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -25,6 +25,7 @@ while [[ "$#" -gt 0 ]]; do
         -o|--out) B="$2"; shift ;;
         -wd|--workdir) wd="$2"; shift ;;
         -idx|--starindex) star_idx="$2"; shift ;;
+        -SE|--SE) mode=SE ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -33,8 +34,6 @@ done
 if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
 
-#umask 077 #limits rwx permission to user only
-#wd=/slipstream/home/dbgap/data/fetched_fastq_RNA-Seq/alignment2
 if [ -z $wd ]; then wd=$(dirname $F1)/alignment; fi
 mkdir -p $wd
 
@@ -42,24 +41,28 @@ if [ -z $F1 ]; then echo "expect read1 fastq as arg1, stop"; exit 1; fi
 if [ -z $F2 ]; then F2=${F1//$F1_suff/$F2_suff}; fi
 
 F1=${F1//"&"/" "}
-#if [ ! -f $F1 ]; then echo "read1 fastq file, $F1, not found! stop"; exit 1; fi
 for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
 F1=${F1//" "/","}
 
+if [ $mode = PE ]; then
+  F2=${F2//"&"/" "}
+  for f in $F2; do 
+    if [ ! -f $f ]; then 
+      echo fastq2 $f could not be found! Are you supplying as -f2 or deriving from read1? quit; 
+      exit 1; 
+    fi; 
+  done
+  F2=${F2//" "/","}
+else
+  F2=""
+fi
 
-#F2=$2if [ -z $F2 ]; then F2=${F1/_R1/_R2}; if [ ! -f $F2 ]; then echo "attempt at guessing read2 fastq as $F2 failed, file not found. try supplying as arg2. stop"; exit 1; fi; fi
-#if [ ! -f $F2 ]; then echo "read2 fastq file, $F2, not found! stop"; exit 1; fi
-F2=${F2//"&"/" "}
-for f in $F2; do if [ ! -f $f ]; then echo fastq2 $f could not be found! Are you supplying as -f2 or deriving from read1? quit; exit 1; fi; done
-F2=${F2//" "/","}
-
-#B=$3
-if [ -z $B ]; then B=$(basename ${F1/_R1_001.fastq.gz/""}); fi
+if [ -z $B ]; then B=$(basename ${F1/$F1_suff/""}); fi
 B=$wd/$(basename $B)
 
 
 echo read1 fastq is $F1
-echo read2 fastq is $F2
+if [ $mode = PE ]; then echo read2 fastq is $F2; fi
 echo output prefix is $B
 
 if [ ! -d $(dirname $B) ]; then

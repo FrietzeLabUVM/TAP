@@ -139,10 +139,10 @@ date > ${align_path}/${root}.start
 $qsub_cmd echo_submission.sh $0 $#
 
 #align script
-echo $F1
 F1=${F1//" "/"&"}
-echo $F1
-align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root)
+se_mode=""
+if [ $mode = SE ]; then se_mode="-SE"; fi
+align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
 echo align_qsub $align_qsub
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
@@ -151,16 +151,16 @@ echo align_jid $align_jid
 salmon_sub_args="-d afterok:$align_jid -J salmon_quant"
 if [ $sub_mode = "bash" ]; then salmon_sub_args=""; fi
 salmon_jid=$(parse_jid "$($qsub_cmd $salmon_sub_args $SCRIPTS/run_salmon_quant.sh $tx_bam $tx)")
-echo $salmon_jid
+echo salmon_jid $salmon_jid
 suppa2_sub_args="-d afterok:$salmon_jid -J suppa2"
 if [ $sub_mode = "bash" ]; then suppa2_sub_args=""; fi
 suppa2_jid=$(parse_jid "$($qsub_cmd $suppa2_sub_args $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref)")
-echo $suppa2_jid
+echo suppa2_jid $suppa2_jid
 #sort and index
 index_sub_args="-d afterok:$align_jid -J bsortindex"
 if [ $sub_mode = "bash" ]; then index_sub_args=""; fi
 index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam)")
-echo $index_jid
+echo index_jid $index_jid
 
 #counting
 featureCounts_sub_args="-d afterok:$index_jid -J featureCounts"
@@ -173,8 +173,8 @@ exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.
 #subsetting bams to a region of interest is useful if only specific genes are relevant for tracks etc.
 #subst_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J subset_bam $SCRIPTS/run_ikaros_subset_bam.sh $sort_bam)")
 
-echo $featr_jid
-echo $exact_jid
+echo featureCount_jid $featr_jid
+echo exactSNP_jid $exact_jid
 
 
 #cleanup #currently omitted, run_cmd.sh not updated for SLURM and only critical for bulk processing
