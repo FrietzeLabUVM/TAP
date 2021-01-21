@@ -149,7 +149,7 @@ echo align_jid $align_jid
 
 #rDNA alignment
 if [ -d $rDNA_index ]; then
-  $qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode
+  $qsub_cmd $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode
 else
   echo rDNA index was not set so no rDNA alignment will be performed.  
   echo Create rDNA index at ${ref}.rDNA/STAR_INDEX to enable this optional feature.
