@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -12,6 +12,7 @@ done
 
 if [ -z $BAM ] || [ -z $CHR_SIZES ] || [ -z $O ]; then
   echo bam file \(-b\|--bam\), chrSizes file \(-s\|--chrSizes\), and output directory \(-o\|--outDir\) are all required. quit.
+  exit 1
 fi
 
 if [ ! -f $BAM ]; then echo bam file $BAM not found! quit.; exit 1; fi
@@ -52,38 +53,41 @@ else
 fi
 echo FACTOR is $FACTOR
 
-BDGp=${name}_norm_pos.bdg
-BDGn=${name}_norm_neg.bdg
-BDGp_showSplice=${name}_norm_pos.showSplice.bdg
-BDGn_showSplice=${name}_norm_neg.showSplice.bdg
+for strand in unstranded postive negative; do
+for norm in raw normalized; do
+for splice in show hide; do
+  sdir=unstranded
+  if [ $strand != unstranded ]; then sdir=stranded; fi
+  bwdir=$sdir/$norm
+  mkdir -p $bwdir
+  suff=bdg
+  if [ $splice = "show" ]; then suff=showSplice.bdg; fi
+  BDG=$bwdir/${name}_${norm}_${strand}.${suff}
+  echo make bedgraph $BDG
+  sarg=""
+  if [ $strand = positive ]; then 
+    sarg="-strand +";
+  elif [ $strand = negative ]; then
+    sarg="-strand -";
+  fi
+  farg=""
+  if [ $norm = normalized ]; then
+    farg="-scale $FACTOR"
+  fi
+  sparg=""
+    if [ $norm = normalized ]; then
+    sparg="-split"
+  fi
 
-echo make bedgraph
-if [ -f $BDGp ]; then echo skip $BDGp, delete to rerun; else genomeCoverageBed -bg -split -scale $FACTOR -strand - -ibam $sBAM -g $CHR_SIZES > $BDGp; fi
-if [ -f $BDGn ]; then echo skip $BDGn, delete to rerun; else genomeCoverageBed -bg -split -scale $FACTOR -strand + -ibam $sBAM -g $CHR_SIZES > $BDGn; fi
-if [ -f $BDGp_showSplice ]; then echo skip $BDGp_showSplice, delete to rerun; else genomeCoverageBed -bg -scale $FACTOR -strand - -ibam $sBAM -g $CHR_SIZES > $BDGp_showSplice; fi
-if [ -f $BDGn_showSplice ]; then echo skip $BDGn_showSplice, delete to rerun; else genomeCoverageBed -bg -scale $FACTOR -strand + -ibam $sBAM -g $CHR_SIZES > $BDGn_showSplice; fi
+  if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else genomeCoverageBed -bg $sparg $farg $sarg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
+  BW=${BDG/%.bdg/.bw}
+  echo make bigwig $BW
+  if [ -f $BW ]; then echo skip bigwig $BW, detete to rerun; else bedGraphToBigWig $BDG $CHR_SIZES $BW; fi
+  ln $BW ..
+done; done; done
 
-BWp=${name}_norm_pos.bw
-BWn=${name}_norm_neg.bw
-BWp_showSplice=${name}_norm_pos.showSplice.bw
-BWn_showSplice=${name}_norm_neg.showSplice.bw
-
-if [ -f $BWp ] && [ -f $BWn ] && [ -f $BWp_showSplice ] && [ -f $BWn_showSplice ]; then
-  echo skip making bigwig
-else
-  echo make bigwig
-  bedGraphToBigWig $BDGp $CHR_SIZES $BWp
-  bedGraphToBigWig $BDGn $CHR_SIZES $BWn
-  bedGraphToBigWig $BDGp_showSplice $CHR_SIZES $BWp_showSplice
-  bedGraphToBigWig $BDGn_showSplice $CHR_SIZES $BWn_showSplice
-
-fi
-
-mv $BWp ..
-mv $BWn ..
-mv $BWp_showSplice ..
-mv $BWn_showSplice ..
 cd ..
-echo delete $tmpdir if $BWp and $BWn and $BWp_showSplice and $BWn_showSplice are correct
+echo delete $tmpdir if bigwigs look good
+rm -r $tmpdir
 #rm ${cell_line}_${extraction}_${replicate}_normalized.bedgraph
 
