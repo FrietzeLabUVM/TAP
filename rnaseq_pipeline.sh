@@ -18,6 +18,7 @@ while [[ "$#" -gt 0 ]]; do
         -s|--suppaRef) suppa_ref="$2"; shift ;; 
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
+        -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -84,13 +85,12 @@ if [ -z $fasta ]; then fasta=$(readlink -m -f $ref/FASTA/genome.fa); echo guessi
 if [ ! -f $fasta ]; then echo fasta $fasta not found! exit; exit 1; fi
 if [ -z $tx ]; then tx=$(readlink -m -f $ref/FASTA/transcriptome.fa); echo guessing transcriptome fasta as $tx; fi
 if [ ! -f $tx ]; then echo transcriptome fasta $tx not found! exit; exit 1; fi
-
-for d in $star_index $suppa_ref; do
-  if [ ! -d $d ]; then
-    echo reference location $d must exists! exit
-    exit 1
-  fi
-done
+if [ -z $rDNA_index ]; then 
+  rDNA_index=$(readlink -m -f ${ref}.rDNA/STAR_INDEX); echo guess rDNA star index as $rDNA_index; 
+else
+  #rDNA star index must exist if specified instead of guessed
+  if [ ! -d $rDNA_index ]; then echo Specified rDNA star index $rDNA_index was not found! quit; fi
+fi
 
 #output locations
 if [ -z $align_path ]; then align_path=~/scratch/alignment_RNA-seq; echo using default alignment output path of $align_path; fi
@@ -146,6 +146,14 @@ align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx 
 echo align_qsub $align_qsub
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
+
+#rDNA alignment
+if [ -d $rDNA_index ]; then
+  $qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode
+else
+  echo rDNA index was not set so no rDNA alignment will be performed.  
+  echo Create rDNA index at ${ref}.rDNA/STAR_INDEX to enable this optional feature.
+fi
 
 #tx quant
 salmon_sub_args="-d afterok:$align_jid -J salmon_quant"

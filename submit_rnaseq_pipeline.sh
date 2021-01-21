@@ -40,6 +40,7 @@ if [ ! -z $cfg ]; then
 	-s|--suppaRef) suppa_ref="$2"; shift ;;
 	-g|--gtf) gtf="$2"; shift ;;
 	-fa|--fasta) fasta="$2"; shift ;;
+        -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) read_mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
 	*) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -63,6 +64,7 @@ while [[ "$#" -gt 0 ]]; do
         -s|--suppaRef) suppa_ref="$2"; shift ;;
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
+        -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) read_mode=SE; shift ;;
         -noSub|--noSub) sub_mode=bash; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -90,6 +92,7 @@ if [ ! -z $star_index ]; then cmd="$cmd --starIndex $star_index"; fi
 if [ ! -z $suppa_ref ]; then cmd="$cmd --suppaRef $suppa_ref"; fi
 if [ ! -z $gtf ]; then cmd="$cmd --gtf $gtf"; fi
 if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
+if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ $read_mode = SE ]; then cmd="$cmd -SE"; fi
 if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi 
 #trim off leading space
@@ -100,8 +103,6 @@ if [ ! -z $cfg ]; then
 else
   todo=$input/*$F1_suff
 fi
-
-echo $todo
 
 for f1 in $todo; do
   if [ ! -f $f1 ]; then 
