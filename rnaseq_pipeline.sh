@@ -175,27 +175,14 @@ bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 $qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs
 
-#counting
-featureCounts_sub_args="-d afterok:$index_jid -J featureCounts"
-if [ $sub_mode = "bash" ]; then featureCounts_sub_args=""; fi
-featr_jid=$(parse_jid "$($qsub_cmd $featureCounts_sub_args $SCRIPTS/run_featureCounts.sh $sort_bam $gtf)")
+#SNPs
 exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
 exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta)")
 
-#subsetting bams to a region of interest is useful if only specific genes are relevant for tracks etc.
-#subst_jid=$(parse_jid "$($qsub_cmd -d afterok:$index_jid -J subset_bam $SCRIPTS/run_ikaros_subset_bam.sh $sort_bam)")
-
-echo featureCount_jid $featr_jid
 echo exactSNP_jid $exact_jid
 
-
-#cleanup #currently omitted, run_cmd.sh not updated for SLURM and only critical for bulk processing
-#$qsub_cmd -hold_jid $salmon_jid -J cleanup_tx_bam $SCRIPTS/run_cmd.sh "if [ -d $salmon_out ]; then rm $tx_bam; fi"
-#$qsub_cmd -hold_jid $featr_jid,$exact_jid,$subst_jid -J cleanup_bams $SCRIPTS/run_cmd.sh "if [ -s $featr_out ]; then rm $sort_bam; rm ${sort_bam}.bai; fi;"
-#$qsub_cmd -hold_jid  $salmon_jid,$featr_jid,$exact_jid,$subst_jid -J finalize $SCRIPTS/run_cmd.sh "date > ${align_path}/${root}.complete"
-
-completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$featr_jid:$exact_jid -J completion"
+completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$exact_jid -J completion"
 if [ $sub_mode = "bash" ]; then completion_sub_args=""; fi
 $qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root}
 
