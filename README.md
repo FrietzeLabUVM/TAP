@@ -50,3 +50,5 @@ Running is simple now:
 The pipeline submits several SLURM jobs for every sample specified.
 
 It's a good idea to check on your submission periodically.  This command will show your current jobs `squeue -u $(basename ~)`.  If you have jobs showing up in the NODELIST(REASON) column with (DependencyNeverSatisfied), something has gone wrong.  You'll need to `scancel` those jobs and go through the logs in the output folder to figure out what has gone wrong.
+
+Files will appear in the output location as jobs finish.  When all jobs for a sample finish successfully, a \*.complete file gets written.  This \*.complete file will prevent the pipeline from running again for that same sample.  Therefore you can add files to the same configuration file later and resubmit without wasting time reprocessing the same data again.  Or resubmit in case some samples processing OK and other do not.  If you do want to replace a sample, for example if you have done more sequencing or made an error, you will have to manually delete this \*.complete file.
