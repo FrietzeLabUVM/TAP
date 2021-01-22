@@ -35,7 +35,7 @@ for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; e
 #if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
 #if [ -z $align_path ]; then echo need alignment output path as -o; exit 1; fi
 
-SCRIPTS=/users/j/r/jrboyd/dbgap_scripts/vacc_scripts
+SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 #relevant suffixes
 if [ -z $F1_suff ]; then F1_suff="_R1_001.fastq.gz"; fi
@@ -136,7 +136,7 @@ fi
 
 date > ${align_path}/${root}.start
 
-$qsub_cmd echo_submission.sh $0 $#
+$qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
 
 #align script
 F1=${F1//" "/"&"}

@@ -23,6 +23,7 @@ sub_mode=sbatch
 
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
+  echo gathering parameters from config file $cfg
   args=$(cat $cfg | awk -v cfg_prefix="#CFG" -v ORS=" " '{if ($1 == cfg_prefix){$1 = ""; print $0}}')
   args="${args//\~/$HOME}"
   if [ ! -z "$args" ]; then
@@ -123,12 +124,11 @@ for f1 in $todo; do
   if [ $read_mode != SE ]; then
     f2=${f1//$F1_suff/$F2_suff}
     for f in $f2; do if [ ! -f $f ]; then echo fastq2 was not found, $f. quit!; exit 1; fi; done
-    cmd_full="bash rnaseq_pipeline.sh -f1 ${f1//" "/&} -f2 ${f2//" "/&} $cmd"
+    cmd_full="bash ${SCRIPT_PATH}/rnaseq_pipeline.sh -f1 ${f1//" "/&} -f2 ${f2//" "/&} $cmd"
   else
-    cmd_full="bash rnaseq_pipeline.sh -f1 ${f1//" "/&} $cmd"
+    cmd_full="bash ${SCRIPT_PATH}/rnaseq_pipeline.sh -f1 ${f1//" "/&} $cmd"
   fi
   if [ ! -z $root ]; then cmd_full="$cmd_full --outPrefix $root"; fi
   echo $cmd_full
   $cmd_full
-  #bash rnaseq_pipeline.sh $cmd -f1 $f1 -ref $ref
 done
