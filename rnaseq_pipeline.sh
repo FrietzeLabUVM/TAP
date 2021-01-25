@@ -143,13 +143,14 @@ F1=${F1//" "/"&"}
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
 align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
-echo align_qsub $align_qsub
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
 #rDNA alignment
 if [ -d $rDNA_index ]; then
-  $qsub_cmd $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode
+  rdna_qsub=$($qsub_cmd $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
+  rdna_jid=$(parse_jid "$rdna_qsub")
+  echo rdna_jid $rdna_jid
 else
   echo rDNA index was not set so no rDNA alignment will be performed.  
   echo Create rDNA index at ${ref}.rDNA/STAR_INDEX to enable this optional feature.
@@ -173,7 +174,9 @@ echo index_jid $index_jid
 #bigwigs
 bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
-$qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs
+bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs)
+bw_jid=$(parse_jid "$bw_qsub")
+echo bw_jid $bw_jid
 
 #SNPs
 exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
@@ -182,7 +185,11 @@ exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.
 
 echo exactSNP_jid $exact_jid
 
-completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$exact_jid -J completion"
+if [ -z $rdna_jid ]; then
+  completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$exact_jid:$bw_jid -J completion"
+else
+  completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$exact_jid:$bw_jid:$rdna_jid -J completion"
+fi
 if [ $sub_mode = "bash" ]; then completion_sub_args=""; fi
 $qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root}
 
