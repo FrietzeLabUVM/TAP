@@ -69,15 +69,15 @@ if [ ! -d $(dirname $B) ]; then
   mkdir -p $(dirname $B)
 fi
 
-if [ -f ${B}.Aligned.sortedByCoord.out.bam ]; then # && [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
- echo output bam ${B}.Aligned.sortedByCoord.out.bam exists! will not rerun.
- exit 0
-fi
+#if [ -f ${B}.Aligned.sortedByCoord.out.bam ]; then # && [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
+# echo output bam ${B}.Aligned.sortedByCoord.out.bam exists! will not rerun.
+# exit 0
+#fi
 
-if [ -f ${B}.Aligned.out.bam ]; then # && [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
- echo output bam ${B}.Aligned.out.bam exists! will not rerun.
- exit 0
-fi
+#if [ -f ${B}.Aligned.out.bam ]; then # && [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
+# echo output bam ${B}.Aligned.out.bam exists! will not rerun.
+# exit 0
+#fi
 
 STAR \
 --runThreadN 8 \
@@ -99,5 +99,3 @@ STAR \
 --quantMode TranscriptomeSAM GeneCounts \
 --twopassMode Basic
 
-#samtools index ${B}.Aligned.sortedByCoord.out.bam
-#samtools index ${B}.Aligned.toTranscriptome.out.bam
