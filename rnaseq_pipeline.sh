@@ -1,6 +1,8 @@
 #!/bin/bash
 #SLURM pipeline for RNAseq
 
+SCRIPTS=$(dirname "$(readlink -f "$0")")
+
 mode=PE
 sub_mode=sbatch
 # umask 077 # rw permission for user only
@@ -21,7 +23,8 @@ while [[ "$#" -gt 0 ]]; do
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+        -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
+        *) echo "Unknown parameter passed: $1"; cat $SCRIPTS/help_msg.txt; exit 1 ;;
     esac
     shift
 done
@@ -34,8 +37,6 @@ for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; e
 #if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
 #if [ -z $fasta]; then echo need reference fasta as -fa; exit 1; fi
 #if [ -z $align_path ]; then echo need alignment output path as -o; exit 1; fi
-
-SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 #relevant suffixes
 if [ -z $F1_suff ]; then F1_suff="_R1_001.fastq.gz"; fi

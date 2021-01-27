@@ -10,6 +10,13 @@ SCRIPT_PATH=$(dirname "$(readlink -f "$0")")
 
 in_param="$@"
 
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -h|--help) cat $SCRIPT_PATH/help_msg.txt; exit 0; shift ;;
+    esac
+    shift
+done
+
 #check if config specified
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -44,7 +51,7 @@ if [ ! -z $cfg ]; then
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) read_mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
-	*) echo "Unknown parameter passed: $1"; exit 1 ;;
+	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
     done
@@ -68,7 +75,7 @@ while [[ "$#" -gt 0 ]]; do
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) read_mode=SE; shift ;;
         -noSub|--noSub) sub_mode=bash; shift ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+        *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
     esac
     shift
 done
