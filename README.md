@@ -57,10 +57,10 @@ Files will appear in the output location as jobs finish.  When all jobs for a sa
 
 ## Special (may replace parameters that are otherwise Required)
 -c, --config				
-:A valid configuration file, each line of which specifies R1 fastq files, optionally comma delimited with a second entry for final file name prefix. A # commented header is also allowed with lines that start with #CMD being parsed for command line parameters.  The config file can specify all required and optional parameters in this way.
+: A valid configuration file, each line of which specifies R1 fastq files, optionally comma delimited with a second entry for final file name prefix. A # commented header is also allowed with lines that start with #CMD being parsed for command line parameters.  The config file can specify all required and optional parameters in this way.
 
 -ref, --reference
-:Path to parent directory for all reference components
+: Path to parent directory for all reference components
   
 ## Required
 -o, --outDir
@@ -80,7 +80,7 @@ Files will appear in the output location as jobs finish.  When all jobs for a sa
 
 ## Optional
 -f1s, --f1_suffix
-:<_R1_001.fastq.gz> The suffix used for R1 fastq files.  This suffix will be replaced with the R2 suffix to guess R2 fastq files.  If no final file prefix is supplied, removal of the R1 suffix generates the final file prefix.
+: <_R1_001.fastq.gz> The suffix used for R1 fastq files.  This suffix will be replaced with the R2 suffix to guess R2 fastq files.  If no final file prefix is supplied, removal of the R1 suffix generates the final file prefix.
 
 -f2s, --f2_suffix
 :<_R2_001.fastq.gz> The suffix used for R2 fastq files.  Will replace the R1 suffix when guessing R2 files.
