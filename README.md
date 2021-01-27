@@ -68,23 +68,31 @@ Files will appear in the output location as jobs finish.  When all jobs for a sa
 
 -idx, --starIndex
 :Path to STAR index, will be derived from -ref if not supplied.
+
 -s, --suppaRef
 :Path to SUPPA2 ioi and ioe references, will be derived from -ref if not supplied.
+
 -g, --gtf
 :Path to GTF reference file, will be derived from -ref if not supplied.
+
 -fa, --fasta
 :Path to genome fasta file, will be derived from -ref if not supplied.
 
 ## Optional
 -f1s, --f1_suffix
 :<_R1_001.fastq.gz> The suffix used for R1 fastq files.  This suffix will be replaced with the R2 suffix to guess R2 fastq files.  If no final file prefix is supplied, removal of the R1 suffix generates the final file prefix.
+
 -f2s, --f2_suffix
 :<_R2_001.fastq.gz> The suffix used for R2 fastq files.  Will replace the R1 suffix when guessing R2 files.
+
 -i, --inDir
 :<current directory> The directory in which all fastq files are located.
+
 -rDNA, --rDNA_starIndex
 :Path to STAR index for organism's rDNA, will be derived from -ref if not supplied.  Without a rDNA STAR index, the rDNA alignment step is skipped.
+
 -SE, --SE
 :If activated, alignment will be in single-end mode instead of the default of paired-end.
+
 -noSub, --noSub
 :If activated, bash will be used to run all pipeline steps in serial instead of sbatch to run in parallel via the job scheduler.  For debugging only or if SLURM's sbatch is not available.
