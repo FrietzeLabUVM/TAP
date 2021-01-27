@@ -18,6 +18,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 #check if config specified
+set -- ${in_param}
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -c|--config) cfg="$2"; if [ ! -f $cfg ]; then echo cannnot find config file $cfg. quit!; exit 1; fi; shift ;;
