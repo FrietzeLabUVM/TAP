@@ -57,10 +57,10 @@ Files will appear in the output location as jobs finish.  When all jobs for a sa
 
 ## Special (may replace parameters that are otherwise Required)
 -c, --config				
-: A valid configuration file, each line of which specifies R1 fastq files, optionally comma delimited with a second entry for final file name prefix. A # commented header is also allowed with lines that start with #CMD being parsed for command line parameters.  The config file can specify all required and optional parameters in this way.
+:  A valid configuration file, each line of which specifies R1 fastq files, optionally comma delimited with a second entry for final file name prefix. A # commented header is also allowed with lines that start with #CMD being parsed for command line parameters.  The config file can specify all required and optional parameters in this way.
 
 -ref, --reference
-: Path to parent directory for all reference components
+:  Path to parent directory for all reference components
   
 ## Required
 -o, --outDir
