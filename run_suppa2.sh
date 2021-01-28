@@ -4,9 +4,14 @@
 
 echo $0 $@
 
-SUPPA_BIN=~/lab_bin
+eval "$(/gpfs2/pi-sfrietze/anaconda3/bin/conda shell.bash hook)"
+conda activate /gpfs2/pi-sfrietze/envs/suppa_env
 
-suppa="$SUPPA_BIN/python $SUPPA_BIN/suppa.py"
+
+#SUPPA_BIN=/gpfs2/pi-sfrietze/bin
+#suppa="$SUPPA_BIN/python $SUPPA_BIN/suppa.py"
+suppa="suppa.py"
+
 salmon_out=$1
 gtf=$2
 suppa_ref=$3

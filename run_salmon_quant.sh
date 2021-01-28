@@ -9,6 +9,8 @@
 #SBATCH -p bluemoon                           # Partition to run in
 #SBATCH --mem=8000   
 
+eval "$(/gpfs2/pi-sfrietze/anaconda3/bin/conda shell.bash hook)"
+conda activate /gpfs2/pi-sfrietze/envs/salmon_env 
 
 echo $0 $@
 
