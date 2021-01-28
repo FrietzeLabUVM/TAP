@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1                               # Request one core
 #SBATCH --ntasks-per-node=1                               # Request one node (if you request more than one core with -n, also using
-#SBATCH --cpus-per-task=8                                           # -N 1 means all cores will be on the same node)
+#SBATCH --cpus-per-task=12                                           # -N 1 means all cores will be on the same node)
 #SBATCH -t 0-12:00                         # Runtime in D-HH:MM format
 #SBATCH -p bluemoon                           # Partition to run in
 #SBATCH --mem=32000                        # Memory total in MB (for all cores)
@@ -80,7 +80,7 @@ fi
 #fi
 
 STAR \
---runThreadN 8 \
+--runThreadN 12 \
 --readFilesIn $F1 $F2 \
 --readFilesCommand gunzip -c \
 --genomeDir $star_idx \

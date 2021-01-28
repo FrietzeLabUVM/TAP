@@ -1,0 +1,24 @@
+#CFG -i /gpfs2/pi-sfrietze/data/AI_RNAseq -o /gpfs2/pi-sfrietze/data/AI_RNAseq_processed -ref /gpfs2/pi-sfrietze/references/MM10 -SE
+31-wt-t0_S93_L006_R1_001.fastq.gz,WT_U0_R1
+sfrietze_spring16_20160413_mouse_76_R1.fastq.gz,WT_U0_R2
+PR8_S24_L007_R1_001.fastq.gz,WT_U0_R3
+33-wt-u-6h_S95_L006_R1_001.fastq.gz,WT_U6_R1
+sfrietze_spring16_20160413_mouse_74_R1.fastq.gz,WT_U6_R2
+32-dF4-t0_S94_L006_R1_001.fastq.gz,DF4_U0_R1
+sfrietze_spring16_20160413_mouse_75_R1.fastq.gz,DF4_U0_R2
+PR11_S27_L007_R1_001.fastq.gz,DF4_U0_R3
+36-dF4-u-6h_S98_L006_R1_001.fastq.gz,DF4_U6_R1
+sfrietze_spring16_20160413_mouse_79_R1.fastq.gz,DF4_U6_R2
+PR12_S28_L007_R1_001.fastq.gz,DF4_U6_R3
+34-wt-M-6h_S96_L006_R1_001.fastq.gz,WT_M_R1
+sfrietze_spring16_20160413_mouse_77_R1.fastq.gz,WT_M_R2
+PR9_S25_L007_R1_001.fastq.gz,WT_M_R3
+35-wt-M40-6h_S97_L006_R1_001.fastq.gz,WT_M40_R1
+sfrietze_spring16_20160413_mouse_78_R1.fastq.gz,WT_M40_R2
+PR10_S26_L007_R1_001.fastq.gz,WT_M40_R3
+37-dF4M-6h_S99_L006_R1_001.fastq.gz,DF4_M_R1
+sfrietze_spring16_20160413_mouse_80_R1.fastq.gz,DF4_M_R2
+PR13_S29_L007_R1_001.fastq.gz,DF4_M_R3
+38-dF4-M40-6h_S100_L006_R1_001.fastq.gz,DF4_M40_R1
+sfrietze_spring16_20160413_mouse_81_R1.fastq.gz,DF4_M40_R2
+PR14_S30_L007_R1_001.fastq.gz,DF4_M40_R3

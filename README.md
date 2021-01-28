@@ -52,3 +52,47 @@ The pipeline submits several SLURM jobs for every sample specified.
 It's a good idea to check on your submission periodically.  This command will show your current jobs `squeue -u $(basename ~)`.  If you have jobs showing up in the NODELIST(REASON) column with (DependencyNeverSatisfied), something has gone wrong.  You'll need to `scancel` those jobs and go through the logs in the output folder to figure out what has gone wrong.
 
 Files will appear in the output location as jobs finish.  When all jobs for a sample finish successfully, a \*.complete file gets written.  This \*.complete file will prevent the pipeline from running again for that same sample.  Therefore you can add files to the same configuration file later and resubmit without wasting time reprocessing the same data again.  Or resubmit in case some samples processing OK and other do not.  If you do want to replace a sample, for example if you have done more sequencing or made an error, you will have to manually delete this \*.complete file.
+
+# Parameters
+
+## Special (may replace parameters that are otherwise Required)
+-c, --config				
+: A valid configuration file, each line of which specifies R1 fastq files, optionally comma delimited with a second entry for final file name prefix. A # commented header is also allowed with lines that start with #CMD being parsed for command line parameters.  The config file can specify all required and optional parameters in this way.
+
+-ref, --reference
+: Path to parent directory for all reference components
+  
+## Required
+-o, --outDir
+: Relative or absolute path where pipeline results shuold be written.
+
+-idx, --starIndex
+: Path to STAR index, will be derived from -ref if not supplied.
+
+-s, --suppaRef
+: Path to SUPPA2 ioi and ioe references, will be derived from -ref if not supplied.
+
+-g, --gtf
+: Path to GTF reference file, will be derived from -ref if not supplied.
+
+-fa, --fasta
+: Path to genome fasta file, will be derived from -ref if not supplied.
+
+## Optional
+-f1s, --f1_suffix
+: <_R1_001.fastq.gz> The suffix used for R1 fastq files.  This suffix will be replaced with the R2 suffix to guess R2 fastq files.  If no final file prefix is supplied, removal of the R1 suffix generates the final file prefix.
+
+-f2s, --f2_suffix
+: <_R2_001.fastq.gz> The suffix used for R2 fastq files.  Will replace the R1 suffix when guessing R2 files.
+
+-i, --inDir
+: <current directory> The directory in which all fastq files are located.
+
+-rDNA, --rDNA_starIndex
+: Path to STAR index for organism's rDNA, will be derived from -ref if not supplied.  Without a rDNA STAR index, the rDNA alignment step is skipped.
+
+-SE, --SE
+: If activated, alignment will be in single-end mode instead of the default of paired-end.
+
+-noSub, --noSub
+: If activated, bash will be used to run all pipeline steps in serial instead of sbatch to run in parallel via the job scheduler.  For debugging only or if SLURM's sbatch is not available.
