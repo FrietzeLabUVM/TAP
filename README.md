@@ -10,6 +10,10 @@ The "set it and forget it" way to do this is to add this line to your ~/.bashrc 
 
 `export PATH=/gpfs2/pi-sfrietze/bin:$PATH`
 
+Or you could just run this line once to modify your .bashrc:
+
+`echo 'export PATH=/gpfs2/pi-sfrietze/bin:$PATH' >> ~/.bashrc`
+
 Then `source .bashrc` and your PATH is setup.  (.bashrc gets sourced everytime you login to the server)
 
 Alternatively you could run `PATH=/gpfs2/pi-sfrietze/bin:$PATH` everytime before running the pipeline.
