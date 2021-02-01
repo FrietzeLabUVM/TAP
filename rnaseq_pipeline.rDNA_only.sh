@@ -1,5 +1,7 @@
 #!/bin/bash
+
 #SLURM pipeline for RNAseq
+#only runs the rDNA part
 
 export PATH=/gpfs2/pi-sfrietze/bin:$PATH
 
@@ -139,17 +141,17 @@ else
   echo no completion file found, starting run for ${align_path}/${root}
 fi
 
-date > ${align_path}/${root}.start
+#date > ${align_path}/${root}.start
 
-$qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
+#$qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
 
 #align script
 F1=${F1//" "/"&"}
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
-align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
-align_jid=$(parse_jid "$align_qsub")
-echo align_jid $align_jid
+#align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
+#align_jid=$(parse_jid "$align_qsub")
+#echo align_jid $align_jid
 
 #rDNA alignment
 if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then
@@ -160,44 +162,3 @@ else
   echo rDNA index was not set so no rDNA alignment will be performed.  
   echo Create rDNA index at ${ref}.rDNA/STAR_INDEX to enable this optional feature.
 fi
-
-#tx quant
-salmon_sub_args="-d afterok:$align_jid -J salmon_quant"
-if [ $sub_mode = "bash" ]; then salmon_sub_args=""; fi
-salmon_jid=$(parse_jid "$($qsub_cmd $salmon_sub_args $SCRIPTS/run_salmon_quant.sh $tx_bam $tx)")
-echo salmon_jid $salmon_jid
-suppa2_sub_args="-d afterok:$salmon_jid -J suppa2"
-if [ $sub_mode = "bash" ]; then suppa2_sub_args=""; fi
-suppa2_jid=$(parse_jid "$($qsub_cmd $suppa2_sub_args $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref)")
-echo suppa2_jid $suppa2_jid
-#sort and index
-index_sub_args="-d afterok:$align_jid -J bsortindex"
-if [ $sub_mode = "bash" ]; then index_sub_args=""; fi
-index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam)")
-echo index_jid $index_jid
-
-#bigwigs
-bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
-if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
-bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs)
-bw_jid=$(parse_jid "$bw_qsub")
-echo bw_jid $bw_jid
-
-#SNPs
-exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
-if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
-exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta)")
-
-echo exactSNP_jid $exact_jid
-
-if [ -z $rdna_jid ]; then
-  finish_sub_args="-d afterany:$salmon_jid:$suppa2_jid:$exact_jid:$bw_jid -J finish"
-  completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$exact_jid:$bw_jid -J completion"
-else
-  finish_sub_args="-d afterany:$salmon_jid:$suppa2_jid:$exact_jid:$bw_jid:$rdna_jid -J finish"
-  completion_sub_args="-d afterok:$salmon_jid:$suppa2_jid:$exact_jid:$bw_jid:$rdna_jid -J completion"
-fi
-if [ $sub_mode = "bash" ]; then completion_sub_args=""; finish_sub_args=""; fi
-$qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root}
-$qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
-

@@ -52,6 +52,8 @@ if [ ! -z $cfg ]; then
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) read_mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
+        -p|--pipeline) pipeline="$2"; shift ;;
+        -sl|--scriptLocation) scripts="$2"; shift ;;
 	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
@@ -76,6 +78,8 @@ while [[ "$#" -gt 0 ]]; do
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -SE|--SE) read_mode=SE; shift ;;
         -noSub|--noSub) sub_mode=bash; shift ;;
+        -p|--pipeline) pipeline="$2"; shift ;;
+        -sl|--scriptLocation) scripts="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
     esac
     shift
@@ -84,6 +88,8 @@ done
 #apply fallback defaults
 if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
+if [ -z $pipeline ]; then pipeline=${SCRIPT_PATH}/rnaseq_pipeline.sh; fi
+if [ -z $scripts ]; then scripts=${SCRIPT_PATH}; fi
 
 #check validity, must have input and (ref or all of idx,s,g,fa)
 if [ -z $input ]; then echo input directory to find fastq in was never set, using current directory. use -i \(--inDir\) to specify.; input=$(pwd); fi;
@@ -102,6 +108,8 @@ if [ ! -z $suppa_ref ]; then cmd="$cmd --suppaRef $suppa_ref"; fi
 if [ ! -z $gtf ]; then cmd="$cmd --gtf $gtf"; fi
 if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
 if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
+if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
+
 if [ $read_mode = SE ]; then cmd="$cmd -SE"; fi
 if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi 
 #trim off leading space
@@ -132,9 +140,9 @@ for f1 in $todo; do
   if [ $read_mode != SE ]; then
     f2=${f1//$F1_suff/$F2_suff}
     for f in $f2; do if [ ! -f $f ]; then echo fastq2 was not found, $f. quit!; exit 1; fi; done
-    cmd_full="bash ${SCRIPT_PATH}/rnaseq_pipeline.sh -f1 ${f1//" "/&} -f2 ${f2//" "/&} $cmd"
+    cmd_full="bash $pipeline -f1 ${f1//" "/&} -f2 ${f2//" "/&} $cmd"
   else
-    cmd_full="bash ${SCRIPT_PATH}/rnaseq_pipeline.sh -f1 ${f1//" "/&} $cmd"
+    cmd_full="bash $pipeline -f1 ${f1//" "/&} $cmd"
   fi
   if [ ! -z $root ]; then cmd_full="$cmd_full --outPrefix $root"; fi
   echo $cmd_full
