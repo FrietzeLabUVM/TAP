@@ -1,6 +1,8 @@
 #!/bin/bash
 #SLURM pipeline for RNAseq
 
+export PATH=/gpfs2/pi-sfrietze/bin:$PATH
+
 SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 mode=PE
@@ -122,7 +124,7 @@ parse_jid () { #parses the job id from output of qsub
 
 if [ $sub_mode != "sbatch" ] && [ $sub_mode != "bash" ]; then echo sub_mode was $sub_mode, not one of sbatch or bash. quit!; exit 1; fi
 if [ $sub_mode = "sbatch" ]; then 
-  qsub_cmd="sbatch -o $log_path/%x.%j.out -e $log_path/%x.%j.error"
+  qsub_cmd="sbatch -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH"
 elif [ $sub_mode = "bash" ]; then
   qsub_cmd="bash"
 fi
@@ -148,7 +150,7 @@ align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
 #rDNA alignment
-if [ -d $rDNA_index ]; then
+if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then
   rdna_qsub=$($qsub_cmd $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid

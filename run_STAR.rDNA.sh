@@ -2,7 +2,7 @@
 #SBATCH --nodes=1                               # Request one core
 #SBATCH --ntasks-per-node=1                               # Request one node (if you request more than one core with -n, also using
 #SBATCH --cpus-per-task=12                                           # -N 1 means all cores will be on the same node)
-#SBATCH -t 0-12:00                         # Runtime in D-HH:MM format
+#SBATCH -t 1-06:00                         # Runtime in D-HH:MM format
 #SBATCH -p bluemoon                           # Partition to run in
 #SBATCH --mem=32000                        # Memory total in MB (for all cores)
 #SBATCH -o star_pe_%j.out                 # File to which STDOUT will be written, including job ID

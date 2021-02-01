@@ -20,4 +20,4 @@ bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.p
 bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.params.csv $args2
 
 #config for SE mode, one pooled too
-bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.SE.csv
+bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.SE.csv $args2
