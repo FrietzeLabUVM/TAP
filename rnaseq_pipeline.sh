@@ -153,7 +153,9 @@ echo align_jid $align_jid
 
 #rDNA alignment
 if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then
-  rdna_qsub=$($qsub_cmd -J STAR_rDNA $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
+  align_rDNA_path=${align_path}/rDNA
+  mkdir -p $align_rDNA_path
+  rdna_qsub=$($qsub_cmd -J STAR_rDNA $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid
 else
