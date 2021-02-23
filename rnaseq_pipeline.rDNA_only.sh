@@ -141,17 +141,10 @@ else
   echo no completion file found, starting run for ${align_path}/${root}
 fi
 
-#date > ${align_path}/${root}.start
-
-#$qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
-
 #align script
 F1=${F1//" "/"&"}
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
-#align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
-#align_jid=$(parse_jid "$align_qsub")
-#echo align_jid $align_jid
 
 #rDNA alignment
 if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then

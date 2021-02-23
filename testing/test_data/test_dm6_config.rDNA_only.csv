@@ -1,0 +1,3 @@
+#CFG -ref ~/lab_shared/indexes/DM6 -o testing/test_alignment.rDNA_only -i testing/test_data
+#CFG -p rnaseq_pipeline.rDNA_only.sh
+test_dm6_2_R1_001.fastq.gz

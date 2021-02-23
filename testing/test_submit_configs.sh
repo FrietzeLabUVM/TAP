@@ -21,3 +21,6 @@ bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.p
 
 #config for SE mode, one pooled too
 bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.SE.csv $args2
+
+#config for running rDNA only
+bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/testing/test_data/test_dm6_config.rDNA_only.csv $args2

@@ -76,8 +76,8 @@ while [[ "$#" -gt 0 ]]; do
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
-        -SE|--SE) read_mode=SE; shift ;;
-        -noSub|--noSub) sub_mode=bash; shift ;;
+        -SE|--SE) read_mode=SE ;;
+        -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
@@ -85,11 +85,16 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+echo pipeline is $pipeline
+
+
 #apply fallback defaults
 if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
 if [ -z $pipeline ]; then pipeline=${SCRIPT_PATH}/rnaseq_pipeline.sh; fi
 if [ -z $scripts ]; then scripts=${SCRIPT_PATH}; fi
+
+echo pipeline is $pipeline
 
 #check validity, must have input and (ref or all of idx,s,g,fa)
 if [ -z $input ]; then echo input directory to find fastq in was never set, using current directory. use -i \(--inDir\) to specify.; input=$(pwd); fi;

@@ -147,13 +147,13 @@ $qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
 F1=${F1//" "/"&"}
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
-align_qsub=$($qsub_cmd $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
+align_qsub=$($qsub_cmd -J STAR_align $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
 #rDNA alignment
 if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then
-  rdna_qsub=$($qsub_cmd $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
+  rdna_qsub=$($qsub_cmd -J STAR_rDNA $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid
 else
