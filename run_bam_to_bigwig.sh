@@ -66,7 +66,7 @@ else
 fi
 echo FACTOR is $FACTOR
 
-for strand in unstranded postive negative; do
+for strand in unstranded positive negative; do
 for norm in raw normalized; do
 for splice in show hide; do
   sdir=unstranded
