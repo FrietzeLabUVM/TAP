@@ -85,9 +85,6 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-echo pipeline is $pipeline
-
-
 #apply fallback defaults
 if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
