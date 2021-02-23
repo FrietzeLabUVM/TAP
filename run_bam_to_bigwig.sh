@@ -64,10 +64,7 @@ for splice in show hide; do
   if [ $strand != unstranded ]; then sdir=stranded; fi
   bwdir=$sdir/$norm
   mkdir -p $bwdir
-  suff=bdg
-  if [ $splice = "show" ]; then suff=showSplice.bdg; fi
-  BDG=$bwdir/${name}_${norm}_${strand}.${suff}
-  echo make bedgraph $BDG
+
   sarg=""
   if [ $strand = positive ]; then 
     sarg="-strand +";
@@ -78,11 +75,17 @@ for splice in show hide; do
   if [ $norm = normalized ]; then
     farg="-scale $FACTOR"
   fi
+  suff=bdg
   sparg=""
-    if [ $norm = normalized ]; then
+  if [ $splice = "show" ]; then
+    suff=showSplice.bdg
+  else
     sparg="-split"
   fi
-
+    
+  BDG=$bwdir/${name}_${norm}_${strand}.${suff}
+  echo make bedgraph $BDG
+  
   if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else genomeCoverageBed -bg $sparg $farg $sarg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
   BW=${BDG/%.bdg/.bw}
   echo make bigwig $BW
