@@ -140,6 +140,10 @@ se_mode=""
 #bigwigs
 bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
-bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs)
+if [ $mode = SE ]; then
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs)
+else
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe)
+fi
 bw_jid=$(parse_jid "$bw_qsub")
 echo bw_jid $bw_jid
