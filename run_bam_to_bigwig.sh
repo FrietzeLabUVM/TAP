@@ -3,12 +3,14 @@
 #SBATCH -o bigwig_%j.out                 # File to which STDOUT will be written, including job ID
 #SBATCH -e bigwig_%j.err                 # File to which STDERR will be written, including job ID
 
+libType=SE
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -b|--bam) BAM="$2"; shift ;;
         -s|--chrSizes) CHR_SIZES="$2"; shift ;;
         -o|--outDir) O="$2"; shift ;;
+        -pe|--pe) libType=PE ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -45,6 +47,13 @@ name=$(basename $name)
 tmpdir=$O/tmp_bam2bw.${name}
 mkdir $tmpdir
 cd $tmpdir
+
+#for PE need to filter for read 1
+if [ libType = PE ]; then
+  samtools view -hb -f 64 $BAM > read1.bam
+  BAM=read1.bam
+fi
+
 
 F_FILE=${name}.factor
 if [ -f $F_FILE ]; then
