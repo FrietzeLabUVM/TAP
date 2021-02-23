@@ -3,12 +3,14 @@
 #SBATCH -o bigwig_%j.out                 # File to which STDOUT will be written, including job ID
 #SBATCH -e bigwig_%j.err                 # File to which STDERR will be written, including job ID
 
+libType=SE
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -b|--bam) BAM="$2"; shift ;;
         -s|--chrSizes) CHR_SIZES="$2"; shift ;;
         -o|--outDir) O="$2"; shift ;;
+        -pe|--pe) libType=PE ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -46,6 +48,13 @@ tmpdir=$O/tmp_bam2bw.${name}
 mkdir $tmpdir
 cd $tmpdir
 
+#for PE need to filter for read 1
+if [ libType = PE ]; then
+  samtools view -hb -f 64 $BAM > read1.bam
+  BAM=read1.bam
+fi
+
+
 F_FILE=${name}.factor
 if [ -f $F_FILE ]; then
   echo skip factor calc
@@ -65,28 +74,28 @@ for splice in show hide; do
   bwdir=$sdir/$norm
   mkdir -p $bwdir
 
-  sarg=""
+  strand_arg=""
   if [ $strand = positive ]; then 
-    sarg="-strand +";
+    strand_arg="-strand +";
   elif [ $strand = negative ]; then
-    sarg="-strand -";
+    strand_arg="-strand -";
   fi
-  farg=""
+  scale_arg=""
   if [ $norm = normalized ]; then
-    farg="-scale $FACTOR"
+    scale_arg="-scale $FACTOR"
   fi
   suff=bdg
-  sparg=""
+  splice_arg=""
   if [ $splice = "show" ]; then
     suff=showSplice.bdg
   else
-    sparg="-split"
+    splice_arg="-split"
   fi
     
   BDG=$bwdir/${name}_${norm}_${strand}.${suff}
   echo make bedgraph $BDG
   
-  if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else genomeCoverageBed -bg $sparg $farg $sarg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
+  if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
   BW=${BDG/%.bdg/.bw}
   echo make bigwig $BW
   if [ -f $BW ]; then echo skip bigwig $BW, detete to rerun; else bedGraphToBigWig $BDG $CHR_SIZES $BW; fi
