@@ -138,7 +138,7 @@ F1=${F1//" "/"&"}
 se_mode=""
 
 #bigwigs
-bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
+bw_sub_args="-J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 if [ $mode = SE ]; then
   bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs)

@@ -94,11 +94,14 @@ for splice in show hide; do
     
   BDG=$bwdir/${name}_${norm}_${strand}.${suff}
   echo make bedgraph $BDG
-  
-  if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
+  cmd=""
+  if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else cmd="genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG"; echo $cmd; genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
+
   BW=${BDG/%.bdg/.bw}
   echo make bigwig $BW
-  if [ -f $BW ]; then echo skip bigwig $BW, detete to rerun; else bedGraphToBigWig $BDG $CHR_SIZES $BW; fi
+  cmd2=""
+  if [ -f $BW ]; then echo skip bigwig $BW, detete to rerun; else cmd2="bedGraphToBigWig $BDG $CHR_SIZES $BW"; echo $cmd2; bedGraphToBigWig $BDG $CHR_SIZES $BW; fi
+
   ln $BW ..
 done; done; done
 
