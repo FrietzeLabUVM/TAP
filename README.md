@@ -1,3 +1,5 @@
+<span style="color:blue"> *WORK IN PROGRESS, NOT WORKING YET* </span>.
+
 # Basic Usage
 
 These instructions are for people who are running the pipeline "as is" and have no need to modify it.
