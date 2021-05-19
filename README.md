@@ -2,6 +2,8 @@
 
 These instructions are for people who are running the pipeline "as is" and have no need to modify it.
 
+It may also be helpful to consult Sophie and Alyssa's tips document [here](https://docs.google.com/document/d/1t8kc3DhJnxHebRJB4b6FNDKfz_HYsP8HyzlB_1A_5I0/view "Useful tips").
+
 ## Setup your PATH
 
 PATH controls where linux searches for programs when you try to run them.  The lab maintains a directory with all executables needed to run this pipeline.
