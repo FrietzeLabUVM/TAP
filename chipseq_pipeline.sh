@@ -197,6 +197,12 @@ if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
   macs2_qsub=$($qsub_cmd $macs2_sub_args $macs2_cmd)
   macs2_jid=bw_jid=$(parse_jid "$macs2_qsub")
   echo macs2_jid $macs2_jid
+
+  #loose peak
+  #broad peak
+  #run_bdgcmp.sh
+  #run_bdg2bw.sh
+  #run_np2bb.sh
 fi
 
 complete_jid=$(parse_jid "$complete_qsub")
