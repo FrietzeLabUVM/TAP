@@ -77,21 +77,14 @@ fi
 # echo output bam ${B}.Aligned.out.bam exists! will not rerun.
 # exit 0
 #fi
-
 STAR \
 --runThreadN 12 \
 --readFilesIn $F1 $F2 \
 --readFilesCommand gunzip -c \
 --genomeDir $star_idx \
---outFilterType BySJout `#encode params` \
---outFilterMultimapNmax 20 \
---alignSJoverhangMin 8 \
---alignSJDBoverhangMin 1 \
+--alignIntronMax 1 \
 --outFilterMismatchNmax 999 \
 --outFilterMismatchNoverReadLmax 0.04 \
---alignIntronMin 20 \
---alignIntronMax 1000000 \
 --alignMatesGapMax 1000000 \
 --outFileNamePrefix $B"." `#output params` \
---outSAMtype BAM Unsorted 
-
+--outSAMtype BAM 

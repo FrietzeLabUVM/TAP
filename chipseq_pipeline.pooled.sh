@@ -36,8 +36,8 @@ done
 
 if [ ! -d $SCRIPTS ]; then echo could not find script directory $SCRIPTS, quit!; exit 1; fi
 if [ -z $F1 ]; then echo need fastq1 as -f1! quit; exit 1; fi
-#if [ -z $input_bam ]; then echo need input_bam as -input_bam! quit; exit 1; fi
-#if [ -z $input_jid ]; then echo need input_jid as -input_jid! quit; exit 1; fi
+if [ -z $input_bam ]; then echo need input_bam as -input_bam! quit; exit 1; fi
+if [ -z $input_jid ]; then echo need input_jid as -input_jid! quit; exit 1; fi
 if [ ! -z $in_path ]; then F1=${in_path}/${F1}; fi
 F1=${F1//"&"/" "}
 for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
@@ -185,19 +185,6 @@ fi
 if [ $sub_mode = "bash" ]; then completion_sub_args=""; finish_sub_args=""; fi
 complete_qsub=$($qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root})
 $qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
-
-if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_macs2.sh -t $sort_bam -i $input_bam -o ${sort_bam/.bam/""}.macs2"
-  if [ -z $input_jid ]; then #no input job dependency
-    macs2_sub_args="-d afterok:$align_jid -J macs2"
-  else #has input job dependency
-    macs2_sub_args="-d afterok:$align_jid:$input_jid -J macs2"
-  fi
-  if [ $sub_mode = "bash" ]; then macs2_sub_args=""; fi
-  macs2_qsub=$($qsub_cmd $macs2_sub_args $macs2_cmd)
-  macs2_jid=bw_jid=$(parse_jid "$macs2_qsub")
-  echo macs2_jid $macs2_jid
-fi
 
 complete_jid=$(parse_jid "$complete_qsub")
 echo complete_jid $complete_jid

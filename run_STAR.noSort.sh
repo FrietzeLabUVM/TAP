@@ -7,7 +7,6 @@
 #SBATCH --mem=32000                        # Memory total in MB (for all cores)
 #SBATCH -o star_pe_%j.out                 # File to which STDOUT will be written, including job ID
 #SBATCH -e star_pe_%j.err                 # File to which STDERR will be written, including job ID
-#SBATCH --mail-user=jrboyd@med.uvm.edu   # Email to which notifications will be sent
 
 #alignment script developed for dbgap data, uses ENCODE standards
 #assumes data is paired end fastq.gz and files end in _R1_001.fastq.gz
@@ -84,8 +83,6 @@ STAR \
 --readFilesIn $F1 $F2 \
 --readFilesCommand gunzip -c \
 --genomeDir $star_idx \
---runDirPerm User_RWX \
---outFilterType BySJout `#encode params` \
 --outFilterMultimapNmax 20 \
 --alignSJoverhangMin 8 \
 --alignSJDBoverhangMin 1 \
