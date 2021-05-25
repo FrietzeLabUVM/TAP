@@ -216,7 +216,7 @@ for f_line in $todo; do
     input_pool2rep_jids[$pool_name]=${align_jid}
   else
     input_pool2rep_bams[$pool_name]="${input_pool2rep_bams[${pool_name}]},${align_path}/${rep_name}${suf_sort_bam}"
-    input_pool2rep_jids[$pool_name]="${input_pool2rep_jids[${pool_name}]},${align_jid}"
+    input_pool2rep_jids[$pool_name]="${input_pool2rep_jids[${pool_name}]}:${align_jid}"
   fi
 done
 
@@ -269,7 +269,7 @@ for f_line in $todo; do
     chip_pool2rep_jids[$pool_name]=${align_jid}
   else
     chip_pool2rep_bams[$pool_name]="${chip_pool2rep_bams[${pool_name}]},${align_path}/${rep_name}${suf_sort_bam}"
-    chip_pool2rep_jids[$pool_name]="${chip_pool2rep_jids[${pool_name}]},${align_jid}"
+    chip_pool2rep_jids[$pool_name]="${chip_pool2rep_jids[${pool_name}]}:${align_jid}"
   fi
 
   if [ -z ${chip_pool2pool_input_bam[${pool_name}]} ]; then

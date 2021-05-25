@@ -105,7 +105,7 @@ exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.
 echo exactSNP_jid $exact_jid
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o ${sort_bam/.bam/""}.macs2"
+  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o ${sort_bam/.bam/}.macs2"
   if [ -z "$sort_jid$input_jid" ]; then
     macs2_sub_args="-J macs2"
   elif [ -z $input_jid ]; then #no input job dependency
