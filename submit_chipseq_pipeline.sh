@@ -226,10 +226,14 @@ for samp in "${!input_pool2rep_bams[@]}"; do
   bam="${input_pool2rep_bams["$samp"]}"
   echo pooled input $samp
   echo $jid---$bam
-  pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
-  pool_jid=$(parse_jid "$pool_qsub")
-  echo pool_jid $pool_jid
-  input_pool2pool_jids[$samp]=${pool_jid}
+  if [ $sub_mode = "bash" ]; then
+    pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
+    pool_jid=$(parse_jid "$pool_qsub")
+    echo pool_jid $pool_jid
+    input_pool2pool_jids[$samp]=${pool_jid}
+  else
+    bash run_pool_bams.sh $bam ${samp}${suf_sort_bam}
+  fi
 done
 
 #run rep chip using pool input and gather jids for pool chip
@@ -269,7 +273,9 @@ for f_line in $todo; do
       echo ${input_name}${suf_sort_bam} for $rep_name is not ${chip_pool2pool_input_bam[$pool_name]}
       exit 1
     fi
-    if [ ${chip_pool2pool_input_jid[$pool_name]} != ${input_pool2pool_jids[${input_name}]} ]; then
+    echo AAA ${chip_pool2pool_input_jid[$pool_name]}
+    echo BBB ${input_pool2pool_jids[${input_name}]}
+    if [ "${chip_pool2pool_input_jid[$pool_name]}" != "${input_pool2pool_jids[${input_name}]}" ]; then
       echo found input mismatch for pooled jids! quit
       echo ${input_pool2pool_jids[${input_name}]} for $rep_name is not ${chip_pool2pool_input_jid[$pool_name]}
       exit 1
@@ -283,10 +289,14 @@ for samp in "${!chip_pool2rep_bams[@]}"; do
   bam="${chip_pool2rep_bams["$samp"]}"
   echo pooled chip $samp
   echo $jid---$bam
-  pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
-  pool_jid=$(parse_jid "$pool_qsub")
-  echo pool_jid $pool_jid
-  chip_pool2pool_jids[$samp]=${pool_jid}
+  if [ $sub_mode = "bash" ]; then
+    pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
+    pool_jid=$(parse_jid "$pool_qsub")
+    echo pool_jid $pool_jid
+    chip_pool2pool_jids[$samp]=${pool_jid}
+  else
+    bash run_pool_bams.sh $bam ${samp}${suf_sort_bam}
+  fi
 done
 
 for samp in "${!chip_pool2pool_jids[@]}"; do
@@ -298,6 +308,8 @@ for samp in "${!chip_pool2pool_jids[@]}"; do
   
   echo chip  $chip_jid---$chip_bam
   echo input $input_jid---$input_bam
+  bash chipseq_pipeline.pooled.sh -chip_bam $chip_bam -input_bam $input_bam -input_jid $chip_jid,$input_jid $cmd
+
 #  pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
 #  pool_jid=$(parse_jid "$pool_qsub")
 #  echo pool_jid $pool_jid

@@ -87,4 +87,4 @@ STAR \
 --outFilterMismatchNoverReadLmax 0.04 \
 --alignMatesGapMax 1000000 \
 --outFileNamePrefix $B"." `#output params` \
---outSAMtype BAM 
+--outSAMtype BAM Unsorted 
