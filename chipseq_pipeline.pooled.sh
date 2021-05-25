@@ -25,13 +25,16 @@ while [[ "$#" -gt 0 ]]; do
         -noSub|--noSub) sub_mode=bash ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
         -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
+        -f1s|--f1_suffix) shift ;; #these get dropped by pooled pipeline
+        -f2s|--f2_suffix) shift ;;
+        -i|--inDir) shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPTS/help_msg.txt; exit 1 ;;
     esac
     shift
 done
 
 if [ ! -d $SCRIPTS ]; then echo could not find script directory $SCRIPTS, quit!; exit 1; fi
-if [ -z $chip_bam ]; then echo need chip_bam as -chip_bam! quit; exit 1; fi
+if [ -z $sort_bam ]; then echo need chip_bam as -chip_bam! quit; exit 1; fi
 if [ -z $input_bam ]; then echo need input_bam as -input_bam! quit; exit 1; fi
 if [ -z $input_jid ]; then echo need input_jid as -input_jid! quit; exit 1; fi
 

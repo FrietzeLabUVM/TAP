@@ -102,7 +102,6 @@ if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 
 cmd=""
 if [ ! -z $F1_suff ]; then cmd="$cmd --f1_suffix $F1_suff"; fi
 if [ ! -z $F2_suff ] && [ $read_mode != SE ] ; then cmd="$cmd --f2_suffix $F2_suff"; fi
-if [ ! -z $root ]; then cmd="$cmd --outPrefix $root"; fi
 if [ ! -z $align_path ]; then cmd="$cmd --outDir $align_path"; fi
 if [ ! -z $ref ]; then cmd="$cmd --reference $ref"; fi
 if [ ! -z $star_index ]; then cmd="$cmd --starIndex $star_index"; fi
@@ -191,6 +190,7 @@ done
 n_dupes=$(echo $all_rep_names | awk -v FS=" " -v OFS="\n" '{$1=$1; print $0}' | sort | uniq -d | wc -l)
 if [ ! $n_dupes -eq 0 ]; then echo not all rep_name were unique! quit; exit 1; fi
 
+echo RUN INPUT REPS
 #run input reps and gather jids for pool inputs
 for f_line in $todo; do
   f1=$(echo $f_line | awk -v FS="," '{print $1}');
@@ -205,37 +205,38 @@ for f_line in $todo; do
   ff1=""
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   f1=$ff1
-
-  cmd_full="bash $pipeline -f1 ${f1//" "/&} $cmd"
+  cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd"
   input_rep_pipeout=$($cmd_full)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" align_jid)
   echo rep align_jid $align_jid
   echo rep bam ${rep_name}${suf_sort_bam}
   if [ -z ${input_pool2rep_bams[${pool_name}]} ]; then
-    input_pool2rep_bams[$pool_name]=${rep_name}${suf_sort_bam}
+    input_pool2rep_bams[$pool_name]=${align_path}/${rep_name}${suf_sort_bam}
     input_pool2rep_jids[$pool_name]=${align_jid}
   else
-    input_pool2rep_bams[$pool_name]="${input_pool2rep_bams[${pool_name}]},${rep_name}${suf_sort_bam}"
+    input_pool2rep_bams[$pool_name]="${input_pool2rep_bams[${pool_name}]},${align_path}/${rep_name}${suf_sort_bam}"
     input_pool2rep_jids[$pool_name]="${input_pool2rep_jids[${pool_name}]},${align_jid}"
   fi
 done
 
 #run pool input using rep input and gather jids reps/pool chip
+echo POOL INPUT
 for samp in "${!input_pool2rep_bams[@]}"; do
   jid="${input_pool2rep_jids["$samp"]}"
   bam="${input_pool2rep_bams["$samp"]}"
   echo pooled input $samp
   echo $jid---$bam
-  if [ $sub_mode = "bash" ]; then
-    pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
+  if [ $sub_mode != "bash" ]; then
+    pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     input_pool2pool_jids[$samp]=${pool_jid}
   else
-    bash run_pool_bams.sh $bam ${samp}${suf_sort_bam}
+    bash run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
   fi
 done
 
+echo RUN REP CHIP VS INPUT
 #run rep chip using pool input and gather jids for pool chip
 for f_line in $todo; do
   f1=$(echo $f_line | awk -v FS="," '{print $1}');
@@ -251,30 +252,28 @@ for f_line in $todo; do
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   f1=$ff1
 
-  cmd_full="bash $pipeline -f1 ${f1//" "/&} -input_bam ${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
+  cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
   input_rep_pipeout=$($cmd_full)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" align_jid)
   echo rep align_jid $align_jid
   echo rep bam ${rep_name}${suf_sort_bam}
   if [ -z ${chip_pool2rep_bams[${pool_name}]} ]; then
-    chip_pool2rep_bams[$pool_name]=${rep_name}${suf_sort_bam}
+    chip_pool2rep_bams[$pool_name]=${align_path}/${rep_name}${suf_sort_bam}
     chip_pool2rep_jids[$pool_name]=${align_jid}
   else
-    chip_pool2rep_bams[$pool_name]="${chip_pool2rep_bams[${pool_name}]},${rep_name}${suf_sort_bam}"
+    chip_pool2rep_bams[$pool_name]="${chip_pool2rep_bams[${pool_name}]},${align_path}/${rep_name}${suf_sort_bam}"
     chip_pool2rep_jids[$pool_name]="${chip_pool2rep_jids[${pool_name}]},${align_jid}"
   fi
 
   if [ -z ${chip_pool2pool_input_bam[${pool_name}]} ]; then
-    chip_pool2pool_input_bam[$pool_name]=${input_name}${suf_sort_bam}
+    chip_pool2pool_input_bam[$pool_name]=${align_path}/${input_name}${suf_sort_bam}
     chip_pool2pool_input_jid[$pool_name]=${input_pool2pool_jids[${input_name}]}
   else #check that new values match existing
-    if [ ${chip_pool2pool_input_bam[$pool_name]} != ${input_name}${suf_sort_bam} ]; then
+    if [ ${chip_pool2pool_input_bam[$pool_name]} != ${align_path}/${input_name}${suf_sort_bam} ]; then
       echo found input mismatch for pooled bams! quit
-      echo ${input_name}${suf_sort_bam} for $rep_name is not ${chip_pool2pool_input_bam[$pool_name]}
+      echo ${align_path}/${input_name}${suf_sort_bam} for $rep_name is not ${chip_pool2pool_input_bam[$pool_name]}
       exit 1
     fi
-    echo AAA ${chip_pool2pool_input_jid[$pool_name]}
-    echo BBB ${input_pool2pool_jids[${input_name}]}
     if [ "${chip_pool2pool_input_jid[$pool_name]}" != "${input_pool2pool_jids[${input_name}]}" ]; then
       echo found input mismatch for pooled jids! quit
       echo ${input_pool2pool_jids[${input_name}]} for $rep_name is not ${chip_pool2pool_input_jid[$pool_name]}
@@ -283,32 +282,35 @@ for f_line in $todo; do
   fi
 done
 
+echo POOL CHIP
 #run pool chip using pool input and rep chip
 for samp in "${!chip_pool2rep_bams[@]}"; do
   jid="${chip_pool2rep_jids["$samp"]}"
   bam="${chip_pool2rep_bams["$samp"]}"
   echo pooled chip $samp
   echo $jid---$bam
-  if [ $sub_mode = "bash" ]; then
-    pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
+  if [ $sub_mode != "bash" ]; then
+    pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     chip_pool2pool_jids[$samp]=${pool_jid}
   else
-    bash run_pool_bams.sh $bam ${samp}${suf_sort_bam}
+    bash run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
   fi
 done
 
+echo RUN POOL CHIP VS INPUT
 for samp in "${!chip_pool2pool_jids[@]}"; do
   chip_jid="${chip_pool2pool_jids["$samp"]}"
-  chip_bam=${samp}${suf_sort_bam}
+  chip_bam=${align_path}/${samp}${suf_sort_bam}
   echo pooled chip $samp
   input_jid="${chip_pool2pool_input_jid["$samp"]}"
   input_bam="${chip_pool2pool_input_bam["$samp"]}"
   
-  echo chip  $chip_jid---$chip_bam
-  echo input $input_jid---$input_bam
-  bash chipseq_pipeline.pooled.sh -chip_bam $chip_bam -input_bam $input_bam -input_jid $chip_jid,$input_jid $cmd
+  echo chip    : $chip_jid---$chip_bam
+  echo vs
+  echo input   : $input_jid---$input_bam
+  bash chipseq_pipeline.pooled.sh -chip_bam $chip_bam -input_bam $input_bam -input_jid "$chip_jid,$input_jid" $cmd
 
 #  pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
 #  pool_jid=$(parse_jid "$pool_qsub")
