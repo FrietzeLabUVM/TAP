@@ -90,6 +90,7 @@ if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
 if [ -z $pipeline ]; then pipeline=${SCRIPT_PATH}/chipseq_pipeline.sh; fi
 if [ -z $scripts ]; then scripts=${SCRIPT_PATH}; fi
+if [ -z $align_path ]; then align_path=$(pwd); fi
 
 echo pipeline is $pipeline
 
@@ -258,7 +259,7 @@ for f_line in $todo; do
   echo input_name  : ${input_name}
   echo input_jid   : ${input_pool2pool_jids[${input_name}]}
 
-  cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
+  cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
   input_rep_pipeout=$($cmd_full)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" align_jid)
   echo rep align_jid $align_jid
