@@ -11,6 +11,7 @@ sub_mode=sbatch
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -chip_bam|--chip_bam) sort_bam="$2"; shift ;;
+        -chip_jid|--chip_jid) sort_jid="$2"; shift ;;
         -input_bam|--input_bam) input_bam="$2"; shift ;;
         -input_jid|--input_jid) input_jid="$2"; shift ;;
         -p|--outPrefix) root="$2"; echo root is $root; shift ;;
@@ -35,6 +36,7 @@ done
 
 if [ ! -d $SCRIPTS ]; then echo could not find script directory $SCRIPTS, quit!; exit 1; fi
 if [ -z $sort_bam ]; then echo need chip_bam as -chip_bam! quit; exit 1; fi
+if [ -z $sort_jid ]; then echo need chip_jid as -chip_jid! quit; exit 1; fi
 if [ -z $input_bam ]; then echo need input_bam as -input_bam! quit; exit 1; fi
 if [ -z $input_jid ]; then echo need input_jid as -input_jid! quit; exit 1; fi
 
@@ -85,7 +87,7 @@ date > ${align_path}/${root}.start
 $qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
 
 #bigwigs
-bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
+bw_sub_args="-d afterok:$sort_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 if [ $mode = SE ]; then
   bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs)
@@ -96,7 +98,7 @@ bw_jid=$(parse_jid "$bw_qsub")
 echo bw_jid $bw_jid
 
 #SNPs
-exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
+exactSNP_sub_args="-d afterok:$sort_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
 exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta)")
 
@@ -104,14 +106,18 @@ echo exactSNP_jid $exact_jid
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
   macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o ${sort_bam/.bam/""}.macs2"
-  if [ -z $input_jid ]; then #no input job dependency
-    macs2_sub_args="-d afterok:$align_jid -J macs2"
+  if [ -z "$sort_jid$input_jid" ]; then
+    macs2_sub_args="-J macs2"
+  elif [ -z $input_jid ]; then #no input job dependency
+    macs2_sub_args="-d afterok:$sort_jid -J macs2"
+  elif [ -z $sort_jid ]; then 
+    macs2_sub_args="-d afterok:$input_jid -J macs2"
   else #has input job dependency
-    macs2_sub_args="-d afterok:$align_jid:$input_jid -J macs2"
+    macs2_sub_args="-d afterok:$sort_jid:$input_jid -J macs2"
   fi
   if [ $sub_mode = "bash" ]; then macs2_sub_args=""; fi
   macs2_qsub=$($qsub_cmd $macs2_sub_args $macs2_cmd)
-  macs2_jid=bw_jid=$(parse_jid "$macs2_qsub")
+  macs2_jid=$(parse_jid "$macs2_qsub")
   echo macs2_jid $macs2_jid
 
   #loose peak
