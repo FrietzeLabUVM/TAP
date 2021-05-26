@@ -130,6 +130,7 @@ declare -Ag chip_rep2input_bams
 declare -Ag chip_rep2input_jids
 declare -Ag chip_pool2rep_bams
 declare -Ag chip_pool2rep_jids
+declare -Ag chip_pool2loose_jids
 declare -Ag chip_pool2input_bams
 declare -Ag chip_pool2input_jids
 declare -Ag chip_pool2pool_jids
@@ -263,13 +264,17 @@ for f_line in $todo; do
   input_rep_pipeout=$($cmd_full)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
+  macs2_jid=$(parse_jid_by_name "$input_rep_pipeout" macs2_jid)
+  echo rep macs2_jid $macs2_jid
   echo rep bam ${rep_name}${suf_sort_bam}
   if [ -z ${chip_pool2rep_bams[${pool_name}]} ]; then
     chip_pool2rep_bams[$pool_name]=${align_path}/${rep_name}${suf_sort_bam}
     chip_pool2rep_jids[$pool_name]=${align_jid}
+    chip_pool2loose_jids[${pool_name}]=${macs2_jid}
   else
     chip_pool2rep_bams[$pool_name]="${chip_pool2rep_bams[${pool_name}]},${align_path}/${rep_name}${suf_sort_bam}"
     chip_pool2rep_jids[$pool_name]="${chip_pool2rep_jids[${pool_name}]}:${align_jid}"
+    chip_pool2loose_jids[$pool_name]="${chip_pool2loose_jids[${pool_name}]}:${macs2_jid}"
   fi
 
   if [ -z ${chip_pool2pool_input_bam[${pool_name}]} ]; then
@@ -327,3 +332,60 @@ for samp in "${!chip_pool2pool_jids[@]}"; do
 #  echo pool_jid $pool_jid
 #  chip_pool2pool_jids[$samp]=${pool_jid}
 done
+
+declare -Ag diff2rep_name
+declare -Ag diff2pool_name
+
+echo RUN REP COMPARISON
+for samp in "${!chip_pool2rep_bams[@]}"; do
+  jid="${chip_pool2loose_jids["$samp"]}"
+  bam="${chip_pool2rep_bams["$samp"]}"
+  loose=${bam//.bam/_macs2_loose_peaks.narrowPeak}
+  echo pooled chip $samp
+  echo jid $jid
+  echo bam $bam
+  echo loose $loose
+  if [ $sub_mode != "bash" ]; then
+    echo DELETE
+    #log_path=${align_path}/${samp}.logs
+    #mkdir -p $log_path
+    #pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    #pool_jid=$(parse_jid "$pool_qsub")
+    #echo pool_jid $pool_jid
+    #chip_pool2pool_jids[$samp]=${pool_jid}
+  else
+    echo DELETE
+    #bash run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
+  fi
+done
+
+
+echo RUN DIFFERENTIAL
+for f_line in $todo; do
+  f1=$(echo $f_line | awk -v FS="," '{print $1}');
+  rep_name=$(echo $f_line | awk -v FS="," '{print $2}');
+  pool_name=$(echo $f_line | awk -v FS="," '{print $3}');
+  input_name=$(echo $f_line | awk -v FS="," '{print $4}');
+  diff_group=$(echo $f_line | awk -v FS="," '{print $5}');
+  if [ $pool_name = $input_name ]; then continue; fi #this is an input
+  if [ -z $diff_group ]; then continue; fi
+  if [ $diff_group -lt 1 ]; then continue; fi
+
+  if [ -z ${diff2rep_name[${diff_group}]} ]; then
+    diff2rep_name[$diff_group]=${rep_name}
+    diff2pool_name[$diff_group]=${pool_name}
+  else
+    diff2rep_name[$diff_group]="${diff2rep_name[${diff_group}]},${rep_name}"
+    diff2pool_name[$diff_group]="${diff2pool_name[${diff_group}]},${pool_name}"
+  fi
+done
+
+if [ ! -z "${!diff2rep_name[@]}" ]; then #check if any diff groups set
+  for diff_group in ${!diff2rep_name[@]}; do
+    rep_names=${diff2rep_name[${diff_group}]}
+    pool_names=${diff2pool_name[${diff_group}]}
+    pool_names=$(echo $pool_names | awk -v FS="," -v OFS="\n" '{$1=$1; print $0}' | sort | uniq | awk -v ORS="," '{$1=$1; print $0}') | sed 's/,$//'
+    echo rep_names $rep_names
+    echo pool_names $pool_names
+  done
+fi

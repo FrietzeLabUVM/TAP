@@ -58,7 +58,7 @@ echo chip_bam is $sort_bam
 echo chip_jid is $sort_jid
 echo input_bam is $input_bam
 echo input_jid is $input_jid
-echo outPrefix is $oot
+echo outPrefix is $root
 echo outDir is $align_path
 echo ref is $ref
 echo star_index is $star_index
