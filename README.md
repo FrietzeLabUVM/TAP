@@ -66,7 +66,7 @@ Files will appear in the output location as jobs finish.  When all jobs for a sa
 : A valid configuration file, each line of which specifies R1 fastq files, optionally comma delimited with a second entry for final file name prefix. A # commented header is also allowed with lines that start with #CMD being parsed for command line parameters.  The config file can specify all required and optional parameters in this way.
 
 -ref, --reference
-: Path to parent directory for all reference components
+: Path to parent directory for all reference components. I have several references setup at `/gpfs2/pi-sfrietze/indexes_jrb`.  The are for HG38, MM10, and DM6.  The "canon" variations don't include haplotypes or patches, just the basic somatic, sex, and mitochondrial chromosomes.  I generally use canon and these are the default if you don't specify "full".
   
 ## Required
 -o, --outDir
