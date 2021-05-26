@@ -197,7 +197,7 @@ if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
   echo macs2_cmd is $macs2_cmd
   macs2_qsub=$($qsub_cmd $macs2_sub_args $macs2_cmd)
   echo macs2_cmd $qsub_cmd $macs2_sub_args $macs2_cmd
-  macs2_jid=bw_jid=$(parse_jid "$macs2_qsub")
+  macs2_jid=$(parse_jid "$macs2_qsub")
   echo macs2_jid $macs2_jid
 
   #loose peak

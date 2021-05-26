@@ -9,6 +9,8 @@ arr=( ${PEAKS//,/" "} )
 arrLen=${#arr[@]}
 
 BAMS=$3
+arr2=( ${BAMS//,/" "} )
+arrLen2=${#arr2[@]}
 
 CHR_SIZES=$4
 

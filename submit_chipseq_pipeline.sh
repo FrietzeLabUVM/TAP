@@ -111,6 +111,10 @@ if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
 if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
 
+if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
+if [ ! -d $star_index ]; then echo star_index $star_index not found!; exit 1; fi
+CHRSIZES=$star_index/chrNameLength.txt
+
 if [ $read_mode = SE ]; then cmd="$cmd -SE"; fi
 if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi 
 #trim off leading space
@@ -232,12 +236,12 @@ for samp in "${!input_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     input_pool2pool_jids[$samp]=${pool_jid}
   else
-    bash run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
+    bash ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
   fi
 done
 
@@ -304,12 +308,12 @@ for samp in "${!chip_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     chip_pool2pool_jids[$samp]=${pool_jid}
   else
-    bash run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
+    bash ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
   fi
 done
 
@@ -333,8 +337,10 @@ for samp in "${!chip_pool2pool_jids[@]}"; do
 #  chip_pool2pool_jids[$samp]=${pool_jid}
 done
 
-declare -Ag diff2rep_name
+declare -Ag diff2rep_bam
+declare -Ag diff2peaks
 declare -Ag diff2pool_name
+declare -Ag diff2jids
 
 echo RUN REP COMPARISON
 for samp in "${!chip_pool2rep_bams[@]}"; do
@@ -346,16 +352,11 @@ for samp in "${!chip_pool2rep_bams[@]}"; do
   echo bam $bam
   echo loose $loose
   if [ $sub_mode != "bash" ]; then
-    echo DELETE
-    #log_path=${align_path}/${samp}.logs
-    #mkdir -p $log_path
-    #pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
-    #pool_jid=$(parse_jid "$pool_qsub")
-    #echo pool_jid $pool_jid
-    #chip_pool2pool_jids[$samp]=${pool_jid}
+    log_path=${align_path}/${samp}.logs
+    mkdir -p $log_path
+    sbatch -d afterok:$jid -J IDR -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path}
   else
-    echo DELETE
-    #bash run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
+    bash ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path}
   fi
 done
 
@@ -369,23 +370,39 @@ for f_line in $todo; do
   diff_group=$(echo $f_line | awk -v FS="," '{print $5}');
   if [ $pool_name = $input_name ]; then continue; fi #this is an input
   if [ -z $diff_group ]; then continue; fi
-  if [ $diff_group -lt 1 ]; then continue; fi
+  if [ $diff_group != 0 ]; then continue; fi
 
-  if [ -z ${diff2rep_name[${diff_group}]} ]; then
-    diff2rep_name[$diff_group]=${rep_name}
+  diff_jids="${chip_pool2loose_jids["$pool_name"]}"
+
+  rep_bam=${align_path}/${rep_name}${suf_sort_bam}
+  pool_peak=${align_path}/${pool_name}_macs2_peaks.narrowPeak
+
+  if [ -z ${diff2rep_bam[${diff_group}]} ]; then
+    diff2rep_bam[$diff_group]=${rep_bam}
     diff2pool_name[$diff_group]=${pool_name}
+    diff2jids[$diff_group]=${diff_jids}
+    diff2peaks[$diff_group]=${pool_peak}
   else
-    diff2rep_name[$diff_group]="${diff2rep_name[${diff_group}]},${rep_name}"
+    diff2rep_bam[$diff_group]="${diff2rep_bam[${diff_group}]},${rep_bam}"
     diff2pool_name[$diff_group]="${diff2pool_name[${diff_group}]},${pool_name}"
+    diff2jids[$diff_group]="${diff2jids[${diff_group}]}:${diff_jids}"
+    diff2peaks[$diff_group]="${diff2peaks[${diff_group}]},${pool_peak}"
   fi
 done
 
-if [ ! -z "${!diff2rep_name[@]}" ]; then #check if any diff groups set
-  for diff_group in ${!diff2rep_name[@]}; do
-    rep_names=${diff2rep_name[${diff_group}]}
+if [ ! -z "${!diff2rep_bam[@]}" ]; then #check if any diff groups set
+  for diff_group in ${!diff2rep_bam[@]}; do
+    rep_names=${diff2rep_bam[${diff_group}]}
     pool_names=${diff2pool_name[${diff_group}]}
+    jids=${diff2jids[${diff_group}]}
+    peaks=${diff2peaks[${diff_group}]}
+    echo pool_names ${pool_names}
     pool_names=$(echo $pool_names | awk -v FS="," -v OFS="\n" '{$1=$1; print $0}' | sort | uniq | awk -v ORS="," '{$1=$1; print $0}') | sed 's/,$//'
     echo rep_names $rep_names
-    echo pool_names $pool_names
+    echo unique pool_names $pool_names
+    log_path=${align_path}/diff_${diff_group}.logs
+    mkdir -p $log_path
+    sbatch -d afterok:$jids -J diff -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_differential.sh $pool_names $rep_names $peaks
+#    bash ${scripts}/run_chip_differential.sh
   done
 fi
