@@ -28,7 +28,8 @@ Configuration files are comma delimited and can contain comment lines starting w
 
 Here's an example config:
 
-    \#CFG -i /gpfs2/pi-sfrietze/data/AI_RNAseq -o /gpfs2/pi-sfrietze/data/AI_RNAseq_processed -ref /gpfs2/pi-sfrietze/references/MM10 -SE
+    #CFG -i /gpfs2/pi-sfrietze/data/AI_RNAseq -o /gpfs2/pi-sfrietze/data/AI_RNAseq_processed -ref /gpfs2/pi-sfrietze/references/MM10 -SE
+    #comments like this aren't interpeted as configuration
     31-wt-t0_S93_L006_R1_001.fastq.gz,WT_U0_R1
     sfrietze_spring16_20160413_mouse_76_R1.fastq.gz,WT_U0_R2
     PR8_S24_L007_R1_001.fastq.gz,WT_U0_R3
