@@ -42,7 +42,7 @@ while [ $i -lt $arrLen ]; do
 		exit 1
 	fi
 	
-	PREFIX=${POOLNAME}.$(basename $PEAKS1)_vs_$(basename $PEAKS2)_IDR
+	PREFIX=${OUTDIR}/${POOLNAME}.$(basename $PEAKS1)_vs_$(basename $PEAKS2)_IDR
 	if [ -f $PREFIX.npeaks-aboveIDR.txt ]; then
 		echo file $PREFIX.npeaks-aboveIDR.txt exists so skip IDR.  deleted this file to run.
 		exit 0
