@@ -187,14 +187,16 @@ complete_qsub=$($qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${al
 $qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o ${sort_bam/.bam/''}.macs2"
+  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref)"
   if [ -z $input_jid ]; then #no input job dependency
     macs2_sub_args="-d afterok:$align_jid -J macs2"
   else #has input job dependency
     macs2_sub_args="-d afterok:$align_jid:$input_jid -J macs2"
   fi
   if [ $sub_mode = "bash" ]; then macs2_sub_args=""; fi
+  echo macs2_cmd is $macs2_cmd
   macs2_qsub=$($qsub_cmd $macs2_sub_args $macs2_cmd)
+  echo macs2_cmd $qsub_cmd $macs2_sub_args $macs2_cmd
   macs2_jid=bw_jid=$(parse_jid "$macs2_qsub")
   echo macs2_jid $macs2_jid
 

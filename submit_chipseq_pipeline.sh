@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 SCRIPT_PATH=$(dirname "$(readlink -f "$0")")
 #echo $SCRIPT_PATH
 
@@ -136,6 +136,7 @@ declare -Ag chip_pool2pool_jids
 
 #need some functions
 parse_jid () { #parses the job id from output of qsub
+        #echo $1
         if [ -z "$1" ]; then
           echo parse_jid expects output of qsub as first input but input was empty! stop
           exit 1
@@ -208,7 +209,7 @@ for f_line in $todo; do
   f1=$ff1
   cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd"
   input_rep_pipeout=$($cmd_full)
-  align_jid=$(parse_jid_by_name "$input_rep_pipeout" align_jid)
+  align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
   echo rep bam ${rep_name}${suf_sort_bam}
   if [ -z ${input_pool2rep_bams[${pool_name}]} ]; then
@@ -230,7 +231,7 @@ for samp in "${!input_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch -d $jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     input_pool2pool_jids[$samp]=${pool_jid}
@@ -255,13 +256,12 @@ for f_line in $todo; do
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   f1=$ff1
   
-  echo all keys    : "${!input_pool2rep_bams[@]}"
   echo input_name  : ${input_name}
   echo input_jid   : ${input_pool2pool_jids[${input_name}]}
 
   cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
   input_rep_pipeout=$($cmd_full)
-  align_jid=$(parse_jid_by_name "$input_rep_pipeout" align_jid)
+  align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
   echo rep bam ${rep_name}${suf_sort_bam}
   if [ -z ${chip_pool2rep_bams[${pool_name}]} ]; then
@@ -299,7 +299,7 @@ for samp in "${!chip_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch -d $jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     chip_pool2pool_jids[$samp]=${pool_jid}
@@ -319,6 +319,7 @@ for samp in "${!chip_pool2pool_jids[@]}"; do
   echo chip    : $chip_jid---$chip_bam
   echo vs
   echo input   : $input_jid---$input_bam
+  echo pooled_cmd is "bash chipseq_pipeline.pooled.sh -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd"
   bash chipseq_pipeline.pooled.sh -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd
 
 #  pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})

@@ -123,32 +123,33 @@ else
 fi
 
 
-if [ $GEN == "mm10" ] || [ $GEN == "mm9" ] || [ $GEN == "MM9" ] || [ $GEN == "MM10" ]; then
+if [ $GEN = "mm10" ] || [ $GEN = "mm9" ] || [ $GEN = "MM9" ] || [ $GEN = "MM10" ]; then
         g=mm
-elif [ $GEN == "hg38" ] || [ $GEN == "hg19" ] || [ $GEN == "U13369" ] || [ $GEN == "HG38" ] || [ $GEN == "HG19" ]; then
+elif [ $GEN = "hg38" ] || [ $GEN = "hg19" ] || [ $GEN = "U13369" ] || [ $GEN = "HG38" ] || [ $GEN = "HG19" ]; then
         g=hs
 else
         echo unrecognized genome ${g} !; exit 1
 fi
 
+extra="--nomodel --extsize 147"
 
 #narrow tight
 if [ -f $OUTDIR/$PREFIX"_peaks.narrowPeak" ]; then
   echo $PREFIX"_peaks.narrowPeak" exists. macs2 has already been run for $TREAT_BAM.
   echo delete $PREFIX"_peaks.narrowPeak" if you want to rerun macs2.
 else
-  cmd_tight="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --bdg"
+  cmd_tight="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --bdg $extra"
   echo cmd_tight is:
   echo $cmd_tight
   $cmd_tight
 fi
 
 #narrow loose
-if [ -f $OUTDIR/$PREFIX"_peaks.narrowPeak" ]; then
-  echo $PREFIX"_peaks.narrowPeak" exists. macs2 has already been run for $TREAT_BAM.
-  echo delete $PREFIX"_peaks.narrowPeak" if you want to rerun macs2.
+if [ -f $OUTDIR/$PREFIX"_loose_peaks.narrowPeak" ]; then
+  echo $PREFIX"_loose_peaks.narrowPeak" exists. macs2 has already been run for $TREAT_BAM.
+  echo delete $PREFIX"_loose_peaks.narrowPeak" if you want to rerun macs2.
 else
-  cmd_loose="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --bdg"
+  cmd_loose="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n ${PREFIX}_loose -$stat $stat_val $extra"
   echo cmd_loose is:
   echo $cmd_loose
   $cmd_loose
@@ -160,7 +161,7 @@ if [ -f $OUTDIR/$PREFIX"_peaks.broadPeak" ]; then
   echo $PREFIX"_peaks.broadPeak" exists. macs2 has already been run for $TREAT_BAM.
   echo delete $PREFIX"_peaks.broadPeak" if you want to rerun macs2.
 else
-  cmd_broad="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --broad --broad-cutoff $BROADCUTOFF"
+  cmd_broad="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --broad --broad-cutoff $BROADCUTOFF $extra"
   echo cmd_broad is:
   echo $cmd_broad
   $cmd_broad

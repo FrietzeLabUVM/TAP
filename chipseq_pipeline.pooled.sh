@@ -40,6 +40,29 @@ if [ -z $sort_jid ]; then echo need chip_jid as -chip_jid! quit; exit 1; fi
 if [ -z $input_bam ]; then echo need input_bam as -input_bam! quit; exit 1; fi
 if [ -z $input_jid ]; then echo need input_jid as -input_jid! quit; exit 1; fi
 
+if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
+if [ ! -d $star_index ]; then echo star_index $star_index not found!; exit 1; fi
+if [ -z $gtf ]; then gtf=$(readlink -m -f $ref/GTF/current.gtf); echo guessing gtf as $gtf; fi
+if [ ! -f $gtf ]; then echo gtf $gtf not found! exit; exit 1; fi
+if [ -z $fasta ]; then fasta=$(readlink -m -f $ref/FASTA/genome.fa); echo guessing fasta as $fasta; fi
+if [ ! -f $fasta ]; then echo fasta $fasta not found! exit; exit 1; fi
+if [ -z $rDNA_index ]; then
+  rDNA_index=$(readlink -m -f ${ref}.rDNA/STAR_INDEX); echo guess rDNA star index as $rDNA_index;
+else
+  #rDNA star index must exist if specified instead of guessed
+  if [ ! -d $rDNA_index ]; then echo Specified rDNA star index $rDNA_index was not found! quit; fi
+fi
+
+
+echo chip_bam is $sort_bam
+echo chip_jid is $sort_jid
+echo input_bam is $input_bam
+echo input_jid is $input_jid
+echo outPrefix is $oot
+echo outDir is $align_path
+echo ref is $ref
+echo star_index is $star_index
+
 suf_sort_bam=".Aligned.sortedByCoord.out.bam"
 suf_sort_bai=".Aligned.sortedByCoord.out.bam.bai"
 
@@ -47,14 +70,11 @@ if [ -z $gtf ]; then gtf=$(readlink -m -f $ref/GTF/current.gtf); echo guessing g
 if [ ! -f $gtf ]; then echo gtf $gtf not found! exit; exit 1; fi
 
 #output locations
-if [ -z $root ]; then root=${sort_bam/$suf_sort_bam/""}; echo guessing root prefix is $root. provide with -p if incorrect;  fi
+if [ -z $root ]; then root=$(basename ${sort_bam/$suf_sort_bam/""}); echo guessing root prefix is $root. provide with -p if incorrect;  fi
 log_path=${align_path}/${root}.logs
 
 #all must exist
 mkdir -p $log_path
-
-#important files
-sort_bam=${align_path}/${root}${suf_sort_bam}
 
 parse_jid () { #parses the job id from output of qsub
         #echo $1
@@ -105,7 +125,7 @@ exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.
 echo exactSNP_jid $exact_jid
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o ${sort_bam/.bam/}.macs2"
+  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam  -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt"
   if [ -z "$sort_jid$input_jid" ]; then
     macs2_sub_args="-J macs2"
   elif [ -z $input_jid ]; then #no input job dependency
