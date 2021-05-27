@@ -1,8 +1,19 @@
 #!/bin/bash
+#SBATCH --nodes=1                               # Request one core
+#SBATCH --ntasks-per-node=1                               # Request one node (if you request more than one core with -n, also using
+#SBATCH --cpus-per-task=1                                           # -N 1 means all cores will be on the same node)
+#SBATCH -t 1-06:00                         # Runtime in D-HH:MM format
+#SBATCH -p bluemoon                           # Partition to run in
+#SBATCH --mem=20000                        # Memory total in MB (for all cores)
+
 
 ### runs MACS2 (tight, loose, and broad) generates FE bigwigs
 
 BDG="--bdg"
+no_model=
+extra=""
+
+
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -t|--treat) TREAT_BAM="$2"; shift ;;
@@ -18,6 +29,7 @@ while [[ "$#" -gt 0 ]]; do
 	-broad_cutoff|--broad_cutoff) BROADCUTOFF="$2"; shift ;;
         -g|--gen) GEN="$2"; shift ;;
 	-s|--chrSizes) CHR_SIZES="$2"; shift ;;
+        -noModel|--noModel) extra="--nomodel --extsize 147"; shift;;
         -no_bdg|--no_bdg) BDG="";;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
@@ -131,7 +143,6 @@ else
         echo unrecognized genome ${g} !; exit 1
 fi
 
-extra="--nomodel --extsize 147"
 
 #narrow tight
 if [ -f $OUTDIR/$PREFIX"_peaks.narrowPeak" ]; then
@@ -185,14 +196,19 @@ if [ $BDG = "--bdg" ]; then
 	echo method - $METHOD
 	CMP_BDG=$OUTDIR/$(basename $TREATMENT)
 	CMP_BDG="${CMP_BDG/_treat_pileup.bdg/}"_"$METHOD".bdg
-	if [ -f $CMP_BDG ] || [ -f ${CMP_BDG/.bdg/.bw} ]; then
-		echo skipping bdgcmp for "$TREATMENT", file "$CMP_BDG" exists
+        CMP_BW=${CMP_BDG/.bdg/.bw}
+	if [ -f $CMP_BDG ] || [ -f ${CMP_BW} ]; then
+		echo skipping bdgcmp for "$TREATMENT", file "$CMP_BDG" or $CMP_BW exists
 	else
-		macs2 bdgcmp -t $TREATMENT -c $CONTROL -m $METHOD -o $CMP_BDG
-                bedSort $CMP_BDG $CMP_BDG
+                cmd_bdgcmp="macs2 bdgcmp -t $TREATMENT -c $CONTROL -m $METHOD -o $CMP_BDG"
+                echo cmd_bdgcmp is:
+                echo $cmd_bdgcmp
+		$cmd_bdgcmp
+                cmd_bedSort="bedSort $CMP_BDG $CMP_BDG"
+                echo cmd_bedSort is:
+                echo $cmd_bedSort
+                $cmd_bedSort
 	fi
-
-	CMP_BW=$OUTDIR/$PREFIX"_FE.bw"
 
 	#required inputs:
 	echo input - $CMP_BDG
@@ -202,6 +218,9 @@ if [ $BDG = "--bdg" ]; then
 		echo file $CMP_BW exists so bdg2bw not necessary for $inputBegGraph
 		echo nothing done.
 	else
-		bedGraphToBigWig $CMP_BDG $CHR_SIZES $CMP_BW
+                cmd_bedGraphToBigWig="bedGraphToBigWig $CMP_BDG $CHR_SIZES $CMP_BW"
+                echo cmd_bedGraphToBigWig is:
+                echo $cmd_bedGraphToBigWig
+                $cmd_bedGraphToBigWig
 	fi
 fi

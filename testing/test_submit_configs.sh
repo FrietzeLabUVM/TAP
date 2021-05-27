@@ -1,6 +1,6 @@
 
 scripts=$(pwd)
-test_dir=testing
+test_dir=~/lab_shared/scripts/vacc_chipseq_pipeline/testing
 #args2="-noSub"
 args="-i $test_dir/test_data -ref references/DM6"
 
@@ -24,3 +24,6 @@ bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.S
 
 #config for running rDNA only
 bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.rDNA_only.csv $args2
+
+#config for running ChIP-seq
+bash $scripts/submit_chipseq_pipeline.sh -c $test_dir/test_data/chip_test_hg38_config.params.csv

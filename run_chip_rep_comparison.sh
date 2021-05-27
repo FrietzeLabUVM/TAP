@@ -22,7 +22,7 @@ if [ ! -d $OUTDIR ]; then
   mkdir -p $OUTDIR
 fi
 
-SCRIPT_DIR=idr_package
+SCRIPT_DIR=/gpfs2/pi-sfrietze/scripts/vacc_chipseq_pipeline/idr_package
 
 i=0; 
 while [ $i -lt $arrLen ]; do 
@@ -74,7 +74,7 @@ while [ $i -lt $arrLen ]; do
   i=$(( $i + 1 )); 
 done
 
-#exit 0
+exit 0
 
 ### bamcorrelate
 #!/bin/bash
@@ -97,7 +97,7 @@ done
 echo BAMS is $BAMS
 echo OUTDIR is $OUTDIR
 echo REF is $REF
-bams=${BAMS//";"/" "}
+bams=${BAMS//","/" "}
 bams_array=( $bams )
 for b in ${bams_array[@]}; do
 	if [ ! -f $b ]; then echo bam file $b not found! stop.; exit 1; fi

@@ -7,6 +7,8 @@ SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 mode=SE
 sub_mode=sbatch
+no_model=
+
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -27,6 +29,7 @@ while [[ "$#" -gt 0 ]]; do
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -PE|--PE) mode=PE ;;
         -noSub|--noSub) sub_mode=bash ;;
+        -noModel|--noModel) no_model="--noModel" ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
         -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPTS/help_msg.txt; exit 1 ;;
@@ -187,7 +190,7 @@ complete_qsub=$($qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${al
 $qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt"
+  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model"
   if [ -z $input_jid ]; then #no input job dependency
     macs2_sub_args="-d afterok:$index_jid -J macs2"
   else #has input job dependency

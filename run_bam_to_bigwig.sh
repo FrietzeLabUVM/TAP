@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH --mem=10000
+#SBATCH --mem=16000
 #SBATCH -o bigwig_%j.out                 # File to which STDOUT will be written, including job ID
 #SBATCH -e bigwig_%j.err                 # File to which STDERR will be written, including job ID
 
@@ -50,17 +50,21 @@ cd $tmpdir
 
 #for PE need to filter for read 1
 if [ libType = PE ]; then
-  samtools view -hb -f 64 $BAM > read1.bam
+  cmd0="samtools view -hb -f 64 $BAM > read1.bam"
+  echo running:
+  echo $cmd0
+  $cmd0
   BAM=read1.bam
 fi
 
 
 F_FILE=${name}.factor
 if [ -f $F_FILE ]; then
-  echo skip factor calc
+  echo skip factor calc, read from $F_FILE
   FACTOR=$(cat $F_FILE)
 else
-  echo calc factor
+  echo calc factor, save to $F_FILE
+  echo samtools view -c $BAM \| awk \'{print \$1}\'
   FACTOR=$(echo "scale=5; 1000000/$(samtools view -c $BAM | awk '{print $1}')" | bc)
   echo $FACTOR > $F_FILE
 fi
@@ -95,12 +99,28 @@ for splice in show hide; do
   BDG=$bwdir/${name}_${norm}_${strand}.${suff}
   echo make bedgraph $BDG
   cmd=""
-  if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else cmd="genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG"; echo $cmd; genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
+  if [ -f $BDG ]; then 
+    echo skip $BDG, delete to rerun; 
+  else 
+    cmd1="genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG"; 
+    cmd2="bedSort $BDG $BDG"
+    echo running: 
+    echo $cmd1
+    $cmd1
+    echo $cmd2
+    $cmd2 
+bedSort $BDG $BDG; fi
 
   BW=${BDG/%.bdg/.bw}
   echo make bigwig $BW
-  cmd2=""
-  if [ -f $BW ]; then echo skip bigwig $BW, delete to rerun; else cmd2="bedGraphToBigWig $BDG $CHR_SIZES $BW"; echo $cmd2; bedGraphToBigWig $BDG $CHR_SIZES $BW; fi
+  cmd3=""
+  if [ -f $BW ]; then 
+    echo skip bigwig $BW, delete to rerun; 
+  else 
+    cmd3="bedGraphToBigWig $BDG $CHR_SIZES $BW"; 
+    echo $cmd3; 
+    $cmd3; 
+  fi
 
   ln $BW ..
 done; done; done

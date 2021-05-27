@@ -1,6 +1,7 @@
 #CFG -ref ~/lab_shared/indexes/HG38 -o testing/test_alignment.chip
 #regular comment, not used
 #CFG -i testing/test_data
+#CFG --noModel
 #format: file1&file2,rep_name,pooled_name,input_name
 #each value of rep_name must be unique
 #replicates will have peaks called individually

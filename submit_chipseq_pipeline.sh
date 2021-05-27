@@ -28,6 +28,7 @@ done
 
 read_mode=PE
 sub_mode=sbatch
+no_model=
 
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
@@ -54,6 +55,7 @@ if [ ! -z $cfg ]; then
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
+        -noModel|--noModel) no_model="--noModel" ;;
 	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
@@ -80,6 +82,7 @@ while [[ "$#" -gt 0 ]]; do
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
+        -noModel|--noModel) no_model="--noModel" ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
     esac
     shift
@@ -89,6 +92,7 @@ done
 if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
 if [ -z $pipeline ]; then pipeline=${SCRIPT_PATH}/chipseq_pipeline.sh; fi
+if [ -z $pipeline2 ]; then pipeline2=${SCRIPT_PATH}/chipseq_pipeline.pooled.sh; fi
 if [ -z $scripts ]; then scripts=${SCRIPT_PATH}; fi
 if [ -z $align_path ]; then align_path=$(pwd); fi
 
@@ -110,6 +114,7 @@ if [ ! -z $gtf ]; then cmd="$cmd --gtf $gtf"; fi
 if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
 if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
+if [ ! -z $no_model ]; then cmd="$cmd --noModel"; fi
 
 if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
 if [ ! -d $star_index ]; then echo star_index $star_index not found!; exit 1; fi
@@ -126,6 +131,7 @@ else
   todo=$input/*$F1_suff
 fi
 
+
 #need arrays mapping pool_name to rep_bams, rep_jids, and input
 declare -Ag input_pool2rep_bams
 declare -Ag input_pool2rep_jids
@@ -135,6 +141,7 @@ declare -Ag chip_rep2input_jids
 declare -Ag chip_pool2rep_bams
 declare -Ag chip_pool2rep_jids
 declare -Ag chip_pool2loose_jids
+declare -Ag chip_pool2macs2_jids
 declare -Ag chip_pool2input_bams
 declare -Ag chip_pool2input_jids
 declare -Ag chip_pool2pool_jids
@@ -230,13 +237,18 @@ done
 echo POOL INPUT
 for samp in "${!input_pool2rep_bams[@]}"; do
   jid="${input_pool2rep_jids["$samp"]}"
+  if [ -z ${jid//:/} ]; then
+    dep=""
+  else
+    dep="-d afterok:$jid"
+  fi
   bam="${input_pool2rep_bams["$samp"]}"
   echo pooled input $samp
   echo $jid---$bam
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    pool_qsub=$(sbatch $dep -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     input_pool2pool_jids[$samp]=${pool_jid}
@@ -302,13 +314,19 @@ echo POOL CHIP
 #run pool chip using pool input and rep chip
 for samp in "${!chip_pool2rep_bams[@]}"; do
   jid="${chip_pool2rep_jids["$samp"]}"
+  if [ -z ${jid//:/} ]; then
+    dep=""
+  else
+    dep="-d afterok:$jid"
+  fi
+
   bam="${chip_pool2rep_bams["$samp"]}"
   echo pooled chip $samp
   echo $jid---$bam
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch -d afterok:$jid -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    pool_qsub=$(sbatch $dep -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     chip_pool2pool_jids[$samp]=${pool_jid}
@@ -328,13 +346,14 @@ for samp in "${!chip_pool2pool_jids[@]}"; do
   echo chip    : $chip_jid---$chip_bam
   echo vs
   echo input   : $input_jid---$input_bam
-  echo pooled_cmd is "bash chipseq_pipeline.pooled.sh -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd"
-  bash chipseq_pipeline.pooled.sh -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd
+  cmd_pooled="bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd"
+  echo pooled_cmd is $cmd_pooled
 
-#  pool_qsub=$(sbatch -d $jid -J pool_bams run_pool_bams.sh $bam ${samp}${suf_sort_bam})
-#  pool_jid=$(parse_jid "$pool_qsub")
-#  echo pool_jid $pool_jid
-#  chip_pool2pool_jids[$samp]=${pool_jid}
+  chip_pool_pipeout=$($cmd_pooled)
+  macs2_jid=$(parse_jid_by_name "$chip_pool_pipeout" macs2_jid)
+  echo pool macs2_jid $macs2_jid
+
+  chip_pool2macs2_jids[$samp]=${macs2_jid}
 done
 
 declare -Ag diff2rep_bam
@@ -345,6 +364,12 @@ declare -Ag diff2jids
 echo RUN REP COMPARISON
 for samp in "${!chip_pool2rep_bams[@]}"; do
   jid="${chip_pool2loose_jids["$samp"]}"
+  if [ -z ${jid//:/} ]; then
+    dep=""
+  else
+    dep="-d afterok:$jid"
+  fi
+
   bam="${chip_pool2rep_bams["$samp"]}"
   loose=${bam//.bam/_macs2_loose_peaks.narrowPeak}
   echo pooled chip $samp
@@ -354,7 +379,7 @@ for samp in "${!chip_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    sbatch -d afterok:$jid -J IDR -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path}
+    sbatch $dep -J IDR -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path}
   else
     bash ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path}
   fi
@@ -370,9 +395,15 @@ for f_line in $todo; do
   diff_group=$(echo $f_line | awk -v FS="," '{print $5}');
   if [ $pool_name = $input_name ]; then continue; fi #this is an input
   if [ -z $diff_group ]; then continue; fi
-  if [ $diff_group != 0 ]; then continue; fi
+  if [ $diff_group = 0 ]; then continue; fi
 
-  diff_jids="${chip_pool2loose_jids["$pool_name"]}"
+  diff_jids="${chip_pool2loose_jids["$pool_name"]}":${chip_pool2macs2_jids["$pool_name"]}
+  diff_jids=$(echo $diff_jids | sed 's/:\+/:/g')
+  if [ -z ${diff_jids//:/} ]; then
+    dep=""
+  else
+    dep="-d afterok:$diff_jids"
+  fi
 
   rep_bam=${align_path}/${rep_name}${suf_sort_bam}
   pool_peak=${align_path}/${pool_name}_macs2_peaks.narrowPeak
@@ -392,17 +423,26 @@ done
 
 if [ ! -z "${!diff2rep_bam[@]}" ]; then #check if any diff groups set
   for diff_group in ${!diff2rep_bam[@]}; do
-    rep_names=${diff2rep_bam[${diff_group}]}
+    rep_bams=${diff2rep_bam[${diff_group}]}
     pool_names=${diff2pool_name[${diff_group}]}
     jids=${diff2jids[${diff_group}]}
+
+    jids=$(echo $jids | sed 's/:\+/:/g')
+    if [ -z ${jids//:/} ]; then
+      dep=""
+    else
+      dep="-d afterok:$jids"
+    fi
+
+
     peaks=${diff2peaks[${diff_group}]}
     echo pool_names ${pool_names}
-    pool_names=$(echo $pool_names | awk -v FS="," -v OFS="\n" '{$1=$1; print $0}' | sort | uniq | awk -v ORS="," '{$1=$1; print $0}') | sed 's/,$//'
-    echo rep_names $rep_names
-    echo unique pool_names $pool_names
+    #pool_names=$(echo $pool_names | awk -v FS="," -v OFS="\n" '{$1=$1; print $0}' | sort | uniq | awk -v ORS="," '{$1=$1; print $0}') | sed 's/,$//'
+    echo rep_bams $rep_bams
+    #echo unique pool_names $pool_names
     log_path=${align_path}/diff_${diff_group}.logs
     mkdir -p $log_path
-    sbatch -d afterok:$jids -J diff -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_differential.sh $pool_names $rep_names $peaks
+    sbatch $dep -J diff -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_differential.sh $pool_names $rep_bams $peaks
 #    bash ${scripts}/run_chip_differential.sh
   done
 fi

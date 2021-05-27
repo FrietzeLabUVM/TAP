@@ -7,6 +7,8 @@ SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 mode=SE
 sub_mode=sbatch
+no_model=
+
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -24,6 +26,7 @@ while [[ "$#" -gt 0 ]]; do
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -PE|--PE) mode=PE ;;
         -noSub|--noSub) sub_mode=bash ;;
+        -noModel|--noModel) no_model="--noModel" ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
         -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
         -f1s|--f1_suffix) shift ;; #these get dropped by pooled pipeline
@@ -125,7 +128,7 @@ exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.
 echo exactSNP_jid $exact_jid
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam  -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt"
+  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam  -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model"
   if [ -z "$sort_jid$input_jid" ]; then
     macs2_sub_args="-J macs2"
   elif [ -z $input_jid ]; then #no input job dependency
