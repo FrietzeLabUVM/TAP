@@ -145,6 +145,7 @@ declare -Ag chip_pool2macs2_jids
 declare -Ag chip_pool2input_bams
 declare -Ag chip_pool2input_jids
 declare -Ag chip_pool2pool_jids
+declare -Ag chip_pool2pool_input_bam
 
 #need some functions
 parse_jid () { #parses the job id from output of qsub
@@ -220,7 +221,8 @@ for f_line in $todo; do
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   f1=$ff1
   cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd"
-  input_rep_pipeout=$($cmd_full)
+  echo $cmd_full
+  input_rep_pipeout=$(bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
   echo rep bam ${rep_name}${suf_sort_bam}
@@ -252,8 +254,15 @@ for samp in "${!input_pool2rep_bams[@]}"; do
     pool_jid=$(parse_jid "$pool_qsub")
     echo pool_jid $pool_jid
     input_pool2pool_jids[$samp]=${pool_jid}
+
+    finish_sub_args="-d afterany:$pool_jid -J finish"
+    completion_sub_args="-d afterok:$pool_jid -J completion"
+    sbatch $completion_sub_args ${scripts}/write_completion.sh ${align_path}/${samp}
+    sbatch $finish_sub_args ${scripts}/write_finish.sh ${align_path}/${samp}
   else
     bash ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
+    bash ${scripts}/write_completion.sh ${align_path}/${samp}
+    bash ${scripts}/write_finish.sh ${align_path}/${samp}
   fi
 done
 
@@ -283,23 +292,27 @@ for f_line in $todo; do
   macs2_jid=$(parse_jid_by_name "$input_rep_pipeout" macs2_jid)
   echo rep macs2_jid $macs2_jid
   echo rep bam ${rep_name}${suf_sort_bam}
-  if [ -z ${chip_pool2rep_bams[${pool_name}]} ]; then
+  if [ -z ${chip_pool2rep_bams[$pool_name]} ]; then
     chip_pool2rep_bams[$pool_name]=${align_path}/${rep_name}${suf_sort_bam}
     chip_pool2rep_jids[$pool_name]=${align_jid}
-    chip_pool2loose_jids[${pool_name}]=${macs2_jid}
+    chip_pool2loose_jids[$pool_name]=${macs2_jid}
   else
-    chip_pool2rep_bams[$pool_name]="${chip_pool2rep_bams[${pool_name}]},${align_path}/${rep_name}${suf_sort_bam}"
-    chip_pool2rep_jids[$pool_name]="${chip_pool2rep_jids[${pool_name}]}:${align_jid}"
-    chip_pool2loose_jids[$pool_name]="${chip_pool2loose_jids[${pool_name}]}:${macs2_jid}"
+    chip_pool2rep_bams[$pool_name]="${chip_pool2rep_bams[$pool_name]},${align_path}/${rep_name}${suf_sort_bam}"
+    chip_pool2rep_jids[$pool_name]="${chip_pool2rep_jids[$pool_name]}:${align_jid}"
+    chip_pool2loose_jids[$pool_name]="${chip_pool2loose_jids[$pool_name]}:${macs2_jid}"
   fi
+  
+  cfg_input_bam=${align_path}/${input_name}${suf_sort_bam}
+  found_input_bam=${chip_pool2pool_input_bam["$pool_name"]}  
 
-  if [ -z ${chip_pool2pool_input_bam[${pool_name}]} ]; then
-    chip_pool2pool_input_bam[$pool_name]=${align_path}/${input_name}${suf_sort_bam}
+  if [ -z ${found_input_bam} ]; then
+    echo set input bam for $pool_name to ${cfg_input_bam}
+    chip_pool2pool_input_bam[$pool_name]=${cfg_input_bam}
     chip_pool2pool_input_jid[$pool_name]=${input_pool2pool_jids[${input_name}]}
   else #check that new values match existing
-    if [ ${chip_pool2pool_input_bam[$pool_name]} != ${align_path}/${input_name}${suf_sort_bam} ]; then
+    if [ ${found_input_bam} != ${cfg_input_bam} ]; then
       echo found input mismatch for pooled bams! quit
-      echo ${align_path}/${input_name}${suf_sort_bam} for $rep_name is not ${chip_pool2pool_input_bam[$pool_name]}
+      echo ${cfg_input_bam} for $rep_name is not ${found_input_bam}
       exit 1
     fi
     if [ "${chip_pool2pool_input_jid[$pool_name]}" != "${input_pool2pool_jids[${input_name}]}" ]; then
