@@ -136,15 +136,12 @@ fi
 declare -Ag input_pool2rep_bams
 declare -Ag input_pool2rep_jids
 declare -Ag input_pool2pool_jids
-declare -Ag chip_rep2input_bams
-declare -Ag chip_rep2input_jids
 declare -Ag chip_pool2rep_bams
 declare -Ag chip_pool2rep_jids
 declare -Ag chip_pool2loose_jids
 declare -Ag chip_pool2macs2_jids
-declare -Ag chip_pool2input_bams
-declare -Ag chip_pool2input_jids
 declare -Ag chip_pool2pool_jids
+declare -Ag chip_pool2pool_input_jid
 declare -Ag chip_pool2pool_input_bam
 
 #need some functions
