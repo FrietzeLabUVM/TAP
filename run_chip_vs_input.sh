@@ -135,13 +135,14 @@ else
 fi
 
 
-if [ $GEN = "mm10" ] || [ $GEN = "mm9" ] || [ $GEN = "MM9" ] || [ $GEN = "MM10" ]; then
-        g=mm
-elif [ $GEN = "hg38" ] || [ $GEN = "hg19" ] || [ $GEN = "U13369" ] || [ $GEN = "HG38" ] || [ $GEN = "HG19" ]; then
-        g=hs
-else
-        echo unrecognized genome ${g} !; exit 1
-fi
+#if [ $GEN = "mm10" ] || [ $GEN = "mm9" ] || [ $GEN = "MM9" ] || [ $GEN = "MM10" ]; then
+#        g=mm
+#elif [ $GEN = "hg38" ] || [ $GEN = "hg19" ] || [ $GEN = "U13369" ] || [ $GEN = "HG38" ] || [ $GEN = "HG19" ]; then
+#        g=hs
+#else
+#        echo unrecognized genome ${g} !; exit 1
+#fi
+g=$(cat $CHR_SIZES | awk -v  total=0 '{total = total + $2}; END {print total}')
 
 
 #narrow tight

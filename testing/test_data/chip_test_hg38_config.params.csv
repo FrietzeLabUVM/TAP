@@ -1,6 +1,8 @@
 #CFG -ref ~/lab_shared/indexes/HG38 -o testing/test_alignment.chip
+#unlike the RNAseq pipeline, the chipseq pipeline assumes data is SE, you may add -PE flag to run PE (NOT YET IMPLEMENTED THOUGH)
 #regular comment, not used
 #CFG -i testing/test_data
+# IMPORTANT delete this --noModel line for real data, it's only necessary for data so small the model cannot be built
 #CFG --noModel
 #format: file1&file2,rep_name,pooled_name,input_name
 #each value of rep_name must be unique
