@@ -217,8 +217,6 @@ for f_line in $todo; do
   ff1=""
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   f1=$ff1
-  cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd"
-  echo $cmd_full
   input_rep_pipeout=$(bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
@@ -282,8 +280,7 @@ for f_line in $todo; do
   echo input_name  : ${input_name}
   echo input_jid   : ${input_pool2pool_jids[${input_name}]}
 
-  cmd_full="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
-  input_rep_pipeout=$($cmd_full)
+  input_rep_pipeout=$(bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
   macs2_jid=$(parse_jid_by_name "$input_rep_pipeout" macs2_jid)
@@ -356,10 +353,9 @@ for samp in "${!chip_pool2pool_jids[@]}"; do
   echo chip    : $chip_jid---$chip_bam
   echo vs
   echo input   : $input_jid---$input_bam
-  cmd_pooled="bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd"
-  echo pooled_cmd is $cmd_pooled
+  echo pooled_cmd is bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd
 
-  chip_pool_pipeout=$($cmd_pooled)
+  chip_pool_pipeout=$(bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd)
   macs2_jid=$(parse_jid_by_name "$chip_pool_pipeout" macs2_jid)
   echo pool macs2_jid $macs2_jid
 
