@@ -1,4 +1,4 @@
-#CFG -ref ~/lab_shared/indexes/HG38 -o testing/test_alignment.chip
+#CFG -ref ~/lab_shared/indexes/HG38 -o testing/test_alignment.chip_pooled
 #unlike the RNAseq pipeline, the chipseq pipeline assumes data is SE, you may add -PE flag to run PE (NOT YET IMPLEMENTED THOUGH)
 #regular comment, not used
 #CFG -i testing/test_data
@@ -14,4 +14,4 @@ test_MCF7_H4K5AC_rep1.esr1_R1_001.fastq.gz&test_MCF7_H4K5AC_rep2.esr1_R1_001.fas
 test_MCF7_H4K8AC_rep1.esr1_R1_001.fastq.gz&test_MCF7_H4K8AC_rep2.esr1_R1_001.fastq.gz,MCF7_H4K8AC_rep1,MCF7_H4K8AC_pooled,MCF7_input_pooled,1
 test_MCF7_H4K5AC_rep1.esr1_R1_001.fastq.gz&test_MCF7_H4K5AC_rep2.esr1_R1_001.fastq.gz&test_MCF7_H4K8AC_rep1.esr1_R1_001.fastq.gz&test_MCF7_H4K8AC_rep2.esr1_R1_001.fastq.gz,MCF7_H4Kboth_rep1,MCF7_H4Kboth_pooled,MCF7_input_pooled,1
 test_MCF7_input_rep1.esr1_R1_001.fastq.gz,MCF7_input_rep1,MCF7_input_pooled,MCF7_input_pooled,0
-test_MCF7_input_rep2.esr1_R1_001.fastq.gz,MCF7_input_rep2,MCF7_input_pooled,MCF7_input_pooled,0
+test_MCF7_input_rep1.esr1_R1_001.fastq.gz&test_MCF7_input_rep2.esr1_R1_001.fastq.gz,MCF7_input_rep2,MCF7_input_pooled,MCF7_input_pooled,0

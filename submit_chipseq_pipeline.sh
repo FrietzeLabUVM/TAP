@@ -215,9 +215,13 @@ for f_line in $todo; do
   echo "input   : $rep_name -> $pool_name"
 
   ff1=""
+  echo f1 is $f1
+  f1=${f1//&/" "}
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   f1=$ff1
-  input_rep_pipeout=$(bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd)
+  cmd_input_reps="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name $cmd"
+  echo cmd_input_reps is: $cmd_input_reps
+  input_rep_pipeout=$($cmd_input_reps)
   align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
   echo rep bam ${rep_name}${suf_sort_bam}
@@ -231,7 +235,7 @@ for f_line in $todo; do
 done
 
 #run pool input using rep input and gather jids reps/pool chip
-echo POOL INPUT
+echo RUN POOL INPUT
 for samp in "${!input_pool2rep_bams[@]}"; do
   jid="${input_pool2rep_jids["$samp"]}"
   if [ -z ${jid//:/} ]; then
@@ -245,13 +249,13 @@ for samp in "${!input_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch $dep -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
-    pool_jid=$(parse_jid "$pool_qsub")
-    echo pool_jid $pool_jid
-    input_pool2pool_jids[$samp]=${pool_jid}
+    input_pool_qsub=$(sbatch $dep -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    input_pool_jid=$(parse_jid "$input_pool_qsub")
+    echo input_pool_jid $input_pool_jid
+    input_pool2pool_jids[$samp]=${input_pool_jid}
 
-    finish_sub_args="-d afterany:$pool_jid -J finish"
-    completion_sub_args="-d afterok:$pool_jid -J completion"
+    finish_sub_args="-d afterany:$input_pool_jid -J finish"
+    completion_sub_args="-d afterok:$input_pool_jid -J completion"
     sbatch $completion_sub_args ${scripts}/write_completion.sh ${align_path}/${samp}
     sbatch $finish_sub_args ${scripts}/write_finish.sh ${align_path}/${samp}
   else
@@ -274,16 +278,21 @@ for f_line in $todo; do
   echo "chip    : $rep_name -> $pool_name vs $input_name"
 
   ff1=""
+  echo f1 is $f1
+  f1=${f1//&/" "}
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
   f1=$ff1
   
   echo input_name  : ${input_name}
   echo input_jid   : ${input_pool2pool_jids[${input_name}]}
 
-  input_rep_pipeout=$(bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd)
-  align_jid=$(parse_jid_by_name "$input_rep_pipeout" index_jid)
+  cmd_chip_rep="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
+  echo cmd_chip_rep is : $cmd_chip_rep
+  chip_rep_pipeout=$($cmd_chip_rep)
+  
+  align_jid=$(parse_jid_by_name "$chip_rep_pipeout" index_jid)
   echo rep align_jid $align_jid
-  macs2_jid=$(parse_jid_by_name "$input_rep_pipeout" macs2_jid)
+  macs2_jid=$(parse_jid_by_name "$chip_rep_pipeout" macs2_jid)
   echo rep macs2_jid $macs2_jid
   echo rep bam ${rep_name}${suf_sort_bam}
   if [ -z ${chip_pool2rep_bams[$pool_name]} ]; then
@@ -333,10 +342,10 @@ for samp in "${!chip_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    pool_qsub=$(sbatch $dep -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
-    pool_jid=$(parse_jid "$pool_qsub")
-    echo pool_jid $pool_jid
-    chip_pool2pool_jids[$samp]=${pool_jid}
+    chip_pool_qsub=$(sbatch $dep -J pool_bams -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam})
+    chip_pool_jid=$(parse_jid "$chip_pool_qsub")
+    echo chip_pool_jid $chip_pool_jid
+    chip_pool2pool_jids[$samp]=${chip_pool_jid}
   else
     bash ${scripts}/run_pool_bams.sh $bam ${align_path}/${samp}${suf_sort_bam}
   fi
@@ -432,14 +441,15 @@ if [ ! -z "${!diff2rep_bam[@]}" ]; then #check if any diff groups set
     rep_bams=${diff2rep_bam[${diff_group}]}
     pool_names=${diff2pool_name[${diff_group}]}
     jids=${diff2jids[${diff_group}]}
-
+    echo jids $jids
     jids=$(echo $jids | sed 's/:\+/:/g')
+    echo jids'(clean)' $jids
     if [ -z ${jids//:/} ]; then
       dep=""
     else
       dep="-d afterok:$jids"
     fi
-
+    echo dep $dep
 
     peaks=${diff2peaks[${diff_group}]}
     echo pool_names ${pool_names}

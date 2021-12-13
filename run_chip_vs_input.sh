@@ -94,7 +94,7 @@ fi
 if [ -z $PVAL ]; then
   if [ -z $QVAL ]; then
     stat="q"
-    stat_val="1e-2"
+    stat_val="5e-3"
   else
     stat="q"
     stat_val=$QVAL
@@ -105,12 +105,12 @@ else
 fi
 #broad peak cutoff
 if [ -z $PVAL_BROAD ]; then
-  if [ -z $PVAL_BROAD ]; then
+  if [ -z $QVAL_BROAD ]; then
     stat_broad="q"
-    stat_val_broad="1e-2"
+    stat_val_broad="5e-3"
   else
     stat_broad="q"
-    stat_val_broad=$PVAL_BROAD
+    stat_val_broad=$QVAL_BROAD
   fi
 else
   stat_broad="p"
@@ -122,12 +122,12 @@ if [ -z $BROADCUTOFF ]; then
 fi
 #loose peak cutoff
 if [ -z $PVAL_LOOSE ]; then
-  if [ -z $PVAL_LOOSE ]; then
+  if [ -z $QVAL_LOOSE ]; then
     stat_loose="p"
-    stat_val_loose="1e-2"
+    stat_val_loose="2e-2"
   else
     stat_loose="q"
-    stat_val_loose=$PVAL_LOOSE
+    stat_val_loose=$QVAL_LOOSE
   fi
 else
   stat_loose="p"
@@ -161,7 +161,7 @@ if [ -f $OUTDIR/$PREFIX"_loose_peaks.narrowPeak" ]; then
   echo $PREFIX"_loose_peaks.narrowPeak" exists. macs2 has already been run for $TREAT_BAM.
   echo delete $PREFIX"_loose_peaks.narrowPeak" if you want to rerun macs2.
 else
-  cmd_loose="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n ${PREFIX}_loose -$stat $stat_val $extra"
+  cmd_loose="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n ${PREFIX}_loose -$stat_loose $stat_val_loose $extra"
   echo cmd_loose is:
   echo $cmd_loose
   $cmd_loose
@@ -173,7 +173,7 @@ if [ -f $OUTDIR/$PREFIX"_peaks.broadPeak" ]; then
   echo $PREFIX"_peaks.broadPeak" exists. macs2 has already been run for $TREAT_BAM.
   echo delete $PREFIX"_peaks.broadPeak" if you want to rerun macs2.
 else
-  cmd_broad="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --broad --broad-cutoff $BROADCUTOFF $extra"
+  cmd_broad="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat_broad $stat_val_broad --broad --broad-cutoff $BROADCUTOFF $extra"
   echo cmd_broad is:
   echo $cmd_broad
   $cmd_broad
