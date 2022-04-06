@@ -9,14 +9,14 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         -b|--bam) BAM="$2"; shift ;;
         -s|--chrSizes) CHR_SIZES="$2"; shift ;;
-        -o|--outDir) O="$2"; shift ;;
+        -o|--outDir) OUT="$2"; shift ;;
         -pe|--pe) libType=PE ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
 
-if [ -z $BAM ] || [ -z $CHR_SIZES ] || [ -z $O ]; then
+if [ -z $BAM ] || [ -z $CHR_SIZES ] || [ -z $OUT ]; then
   echo bam file \(-b\|--bam\), chrSizes file \(-s\|--chrSizes\), and output directory \(-o\|--outDir\) are all required. quit.
   exit 1
 fi
@@ -39,19 +39,25 @@ if [ ! -f $CHR_SIZES ]; then
   exit 1
 fi
 
-mkdir -p $O
-O=$(readlink -f $O)
+mkdir -p $OUT
+O=$(readlink -f $OUT)
 
 name=${BAM/.bam/""}
 name=$(basename $name)
-tmpdir=$O/tmp_bam2bw.${name}
-mkdir $tmpdir
+tmpdir=$OUT/tmp_bam2bw.${name}
+
+echo TMPDIR is $tmpdir
+
+mkdir -p $tmpdir
 cd $tmpdir
 
 #for PE need to filter for read 1
-if [ libType = PE ]; then
-  samtools view -hb -f 64 $BAM > read1.bam
-  BAM=read1.bam
+if [ $libType = PE ]; then
+  R1_BAM=read1.bam
+  samtools view -hb -f 64 $BAM > $R1_BAM
+  BAM=$(readlink -f $R1_BAM)
+  echo PE libType set, only using R1 
+  echo BAM is now $BAM
 fi
 
 
@@ -107,6 +113,6 @@ done; done; done
 
 cd ..
 echo delete $tmpdir if bigwigs look good
-rm -r $tmpdir
+#rm -r $tmpdir
 #rm ${cell_line}_${extraction}_${replicate}_normalized.bedgraph
 
