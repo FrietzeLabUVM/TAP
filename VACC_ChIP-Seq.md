@@ -7,7 +7,7 @@ ln -s fullpath/to/\*fastq.gz input_fastqs/
 
 # Create a configuration file
 
-The ChIPseq pipeline assumes single-end sequencing so that is the default (RNAseq assumes paired-end). If you have paired-end ChIPseq (or cut&run or ATAC), set the -SE flag in your config.
+The ChIPseq pipeline assumes single-end sequencing so that is the default (RNAseq assumes paired-end). If you have paired-end ChIPseq (or cut&run or ATAC), set the -PE flag in your config.
 
     #CFG -PE
 
