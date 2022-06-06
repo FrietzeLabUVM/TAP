@@ -54,11 +54,11 @@ Unlike RNAseq, the second column of prefixes is required and an additional 2 col
 
 The body of a ChIPseq confiugration file could look like this:
 
-#1) fastq file, 2) unique sample prefix, 3) pooled sample prefix, 4) pooled input prefix to compare to
-fq1a.gz&fq1b.gz,MCF7_ATAD2B_rep1,MCF7_ATAD2B_pooled,MCF7_input_pooled
-fq2.gz,MCF7_ATAD2B_rep2,MCF7_ATAD2B_pooled,MCF7_input_pooled
-fq3.gz,MCF7_input_rep1,MCF7_input_pooled,MCF7_input_pooled
-fq4.gz,MCF7_input_rep2,MCF7_input_pooled,MCF7_input_pooled
+    #1) fastq file, 2) unique sample prefix, 3) pooled sample prefix, 4) pooled input prefix to compare to
+    fq1a.gz&fq1b.gz,MCF7_ATAD2B_rep1,MCF7_ATAD2B_pooled,MCF7_input_pooled
+    fq2.gz,MCF7_ATAD2B_rep2,MCF7_ATAD2B_pooled,MCF7_input_pooled
+    fq3.gz,MCF7_input_rep1,MCF7_input_pooled,MCF7_input_pooled
+    fq4.gz,MCF7_input_rep2,MCF7_input_pooled,MCF7_input_pooled
 
 Note how the input samples have identical entries for the pooled sample prefix and input prefix
 
