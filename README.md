@@ -121,7 +121,7 @@ Files will appear in the output location as jobs finish.  When all jobs for a sa
 : Path to STAR index for organism's rDNA, will be derived from -ref if not supplied.  Without a rDNA STAR index, the rDNA alignment step is skipped.
 
 -SE, --SE
-: If activated, alignment will be in single-end mode instead of the default of paired-end.
+: If activated, alignment will be in single-end mode instead of the RNA-seq default of paired-end.  For ChIP-seq, -SE is the default.
 
 -noSub, --noSub
 : If activated, bash will be used to run all pipeline steps in serial instead of sbatch to run in parallel via the job scheduler.  For debugging only or if SLURM's sbatch is not available.
