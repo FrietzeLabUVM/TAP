@@ -91,7 +91,9 @@ if [ ! -f $fasta ]; then echo fasta $fasta not found! exit; exit 1; fi
 if [ -z $tx ]; then tx=$(readlink -m -f $ref/FASTA/transcriptome.fa); echo guessing transcriptome fasta as $tx; fi
 if [ ! -f $tx ]; then echo transcriptome fasta $tx not found! exit; exit 1; fi
 if [ -z $rDNA_index ]; then 
-  rDNA_index=$(readlink -m -f ${ref}.rDNA/STAR_INDEX); echo guessing rDNA star index as $rDNA_index; 
+  if [ -d ${ref}.rDNA/STAR_INDEX ]; then
+    rDNA_index=$(readlink -m -f ${ref}.rDNA/STAR_INDEX); echo guessing rDNA star index as $rDNA_index; 
+  fi
 else
   #rDNA star index must exist if specified instead of guessed
   if [ ! -d $rDNA_index ]; then echo Specified rDNA star index $rDNA_index was not found! quit; fi

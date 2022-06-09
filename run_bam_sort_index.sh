@@ -13,6 +13,11 @@
 
 echo $0 $@
 
+echo WHICH
+which samtools
+echo LDD
+ldd -r $(which samtools)
+
 b=$1
 if [ -z $b ]; then echo bam file expected as arg1, quit.; exit 1; fi
 
