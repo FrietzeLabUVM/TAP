@@ -61,21 +61,12 @@ mkdir -p $tmpdir
 cd $tmpdir
 
 #for PE need to filter for read 1
-#<<<<<<< HEAD
-#if [ $libType = PE ]; then
-#  R1_BAM=read1.bam
-#  samtools view -hb -f 64 $BAM > $R1_BAM
-#  BAM=$(readlink -f $R1_BAM)
-#  echo PE libType set, only using R1 
-#  echo BAM is now $BAM
-#=======
 if [ libType = PE ]; then
   cmd0="samtools view -hb -f 64 $BAM > read1.bam"
   echo running:
   echo $cmd0
   $cmd0
   BAM=read1.bam
-#>>>>>>> chipseq
 fi
 
 
