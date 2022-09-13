@@ -1,0 +1,14 @@
+data/genome_tables/genome_table.worm.ws220.txt.i
+data/genome_tables/genome_table.human.hg18.txt.i
+data/idrToolDef.xml.i
+data/genome_tables/genome_table.human.hg19.txt.i
+data/genome_tables/.DS_Store.i
+data/idrPlotWrapper.sh.i
+data/batch-consistency-plot.r.i
+data/genome_tables/genome_table.mm9.txt.i
+data/genome_tables/genome_table.dmel.r5.32.txt.i
+data/batch-consistency-analysis.r.i
+data/genome_tables/._.DS_Store.i
+data/tool_dependencies.xml.i
+data/idrPlotDef.xml.i
+data/functions-all-clayton-12-13.r.i

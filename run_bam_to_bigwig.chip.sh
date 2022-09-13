@@ -1,12 +1,7 @@
-#!/bin/bash
-#SBATCH --mem=16000
+#!/bin/sh
+#SBATCH --mem=10000
 #SBATCH -o bigwig_%j.out                 # File to which STDOUT will be written, including job ID
 #SBATCH -e bigwig_%j.err                 # File to which STDERR will be written, including job ID
-
-echo script:
-echo $0
-echo args:
-echo $@
 
 libType=SE
 
@@ -14,18 +9,14 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         -b|--bam) BAM="$2"; shift ;;
         -s|--chrSizes) CHR_SIZES="$2"; shift ;;
-        -o|--outDir) OUT="$2"; shift ;;
+        -o|--outDir) O="$2"; shift ;;
         -pe|--pe) libType=PE ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
 
-echo BAM is $BAM
-echo CHR_SIZES is $CHR_SIZES
-echo OUT is $OUT
-
-if [ -z $BAM ] || [ -z $CHR_SIZES ] || [ -z $OUT ]; then
+if [ -z $BAM ] || [ -z $CHR_SIZES ] || [ -z $O ]; then
   echo bam file \(-b\|--bam\), chrSizes file \(-s\|--chrSizes\), and output directory \(-o\|--outDir\) are all required. quit.
   exit 1
 fi
@@ -48,52 +39,36 @@ if [ ! -f $CHR_SIZES ]; then
   exit 1
 fi
 
-mkdir -p $OUT
-O=$(readlink -f $OUT)
+mkdir -p $O
+O=$(readlink -f $O)
 
 name=${BAM/.bam/""}
 name=$(basename $name)
-tmpdir=$OUT/tmp_bam2bw.${name}
-
-echo TMPDIR is $tmpdir
-
-mkdir -p $tmpdir
+tmpdir=$O/tmp_bam2bw.${name}
+mkdir $tmpdir
 cd $tmpdir
 
 #for PE need to filter for read 1
-<<<<<<< HEAD
-if [ $libType = PE ]; then
-  R1_BAM=read1.bam
-  samtools view -hb -f 64 $BAM > $R1_BAM
-  BAM=$(readlink -f $R1_BAM)
-  echo PE libType set, only using R1 
-  echo BAM is now $BAM
-=======
 if [ libType = PE ]; then
-  cmd0="samtools view -hb -f 64 $BAM > read1.bam"
-  echo running:
-  echo $cmd0
-  $cmd0
+  samtools view -hb -f 64 $BAM > read1.bam
   BAM=read1.bam
->>>>>>> chipseq
 fi
 
 
 F_FILE=${name}.factor
 if [ -f $F_FILE ]; then
-  echo skip factor calc, read from $F_FILE
+  echo skip factor calc
   FACTOR=$(cat $F_FILE)
 else
-  echo calc factor, save to $F_FILE
-  echo samtools view -c $BAM \| awk \'{print \$1}\'
+  echo calc factor
   FACTOR=$(echo "scale=5; 1000000/$(samtools view -c $BAM | awk '{print $1}')" | bc)
   echo $FACTOR > $F_FILE
 fi
 echo FACTOR is $FACTOR
 
-for strand in unstranded positive negative; do
+for strand in unstranded; do
 for norm in raw normalized; do
-for splice in show hide; do
+for splice in hide; do
   sdir=unstranded
   if [ $strand != unstranded ]; then sdir=stranded; fi
   bwdir=$sdir/$norm
@@ -120,34 +95,18 @@ for splice in show hide; do
   BDG=$bwdir/${name}_${norm}_${strand}.${suff}
   echo make bedgraph $BDG
   cmd=""
-  if [ -f $BDG ]; then 
-    echo skip $BDG, delete to rerun; 
-  else 
-    cmd1="genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG"; 
-    cmd2="bedSort $BDG $BDG"
-    echo running: 
-    echo $cmd1
-    $cmd1
-    echo $cmd2
-    $cmd2 
-bedSort $BDG $BDG; fi
+  if [ -f $BDG ]; then echo skip $BDG, delete to rerun; else cmd="genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG"; echo $cmd; genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG; bedSort $BDG $BDG; fi
 
   BW=${BDG/%.bdg/.bw}
   echo make bigwig $BW
-  cmd3=""
-  if [ -f $BW ]; then 
-    echo skip bigwig $BW, delete to rerun; 
-  else 
-    cmd3="bedGraphToBigWig $BDG $CHR_SIZES $BW"; 
-    echo $cmd3; 
-    $cmd3; 
-  fi
+  cmd2=""
+  if [ -f $BW ]; then echo skip bigwig $BW, delete to rerun; else cmd2="bedGraphToBigWig $BDG $CHR_SIZES $BW"; echo $cmd2; bedGraphToBigWig $BDG $CHR_SIZES $BW; fi
 
   ln $BW ..
 done; done; done
 
 cd ..
 echo delete $tmpdir if bigwigs look good
-#rm -r $tmpdir
+rm -r $tmpdir
 #rm ${cell_line}_${extraction}_${replicate}_normalized.bedgraph
 
