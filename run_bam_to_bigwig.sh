@@ -1,7 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 #SBATCH --mem=10000
 #SBATCH -o bigwig_%j.out                 # File to which STDOUT will be written, including job ID
 #SBATCH -e bigwig_%j.err                 # File to which STDERR will be written, including job ID
+
+echo script:
+echo $0
+echo args:
+echo $@
 
 libType=SE
 
@@ -15,6 +20,10 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
+echo BAM is $BAM
+echo CHR_SIZES is $CHR_SIZES
+echo OUT is $OUT
 
 if [ -z $BAM ] || [ -z $CHR_SIZES ] || [ -z $OUT ]; then
   echo bam file \(-b\|--bam\), chrSizes file \(-s\|--chrSizes\), and output directory \(-o\|--outDir\) are all required. quit.
