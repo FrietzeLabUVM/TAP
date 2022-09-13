@@ -1,3 +1,5 @@
+<span style="color:blue"> *WORK IN PROGRESS, NOT WORKING YET* </span>.
+
 # Basic Usage
 
 These instructions are for people who are running the RNA-seq and ChIP-seq pipelines "as is" and have no need to modify them. The ChIP-seq pipeline is an elaboration on the RNA-seq pipeline and intructions here generally apply to both.  Please read the ChIP-seq specific section for what is different and additional instructions.
@@ -90,6 +92,10 @@ Files will appear in the output location as jobs finish.  When all jobs for a sa
 
 -ref, --reference
 : Path to parent directory for all reference components. I have several references setup at `/gpfs2/pi-sfrietze/indexes_jrb`.  They are for HG38, MM10, and DM6.  The "canon" variations don't include haplotypes or patches, just the basic somatic, sex, and mitochondrial chromosomes.  I generally use canon and these are the default if you don't specify "full".
+
+### Building your own reference
+
+To build your own reference, you will need a FASTA file and a correpsponding gene annotation GTF file.  Use the included setup script `bash setup_scripts/setup_new_reference.12core.sh -o OUTPUT_LOCATION -f YOUR_FASTA --gtf_gencode GENCODE GTF`.  ENSEMBLE and UCSC GTF files are also supported via --gtf_ensemble or --gtf_ucsc. Similarly `setup_new_rDNA.sh` can be used to install an rDNA  reference.
   
 ## Required
 -o, --outDir
