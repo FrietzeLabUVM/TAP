@@ -394,9 +394,9 @@ for samp in "${!chip_pool2rep_bams[@]}"; do
   if [ $sub_mode != "bash" ]; then
     log_path=${align_path}/${samp}.logs
     mkdir -p $log_path
-    sbatch $dep -J IDR -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path}
+    sbatch $dep -J IDR -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path} ${scripts}
   else
-    bash ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path}
+    bash ${scripts}/run_chip_rep_comparison.sh ${samp} ${loose} ${bam} ${CHRSIZES} ${align_path} ${scripts}
   fi
 done
 

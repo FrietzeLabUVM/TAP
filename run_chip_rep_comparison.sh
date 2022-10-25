@@ -22,7 +22,14 @@ if [ ! -d $OUTDIR ]; then
   mkdir -p $OUTDIR
 fi
 
-SCRIPT_DIR=/gpfs2/pi-sfrietze/scripts/vacc_chipseq_pipeline/idr_package
+PIPELINE_PATH=$6
+
+SCRIPT_DIR=${PIPELINE_PATH}/idr_package
+
+if [ ! -d $SCRIPT_DIR ]; then
+  echo cannot find IDR package location. SCRIPT_DIR \"$SCRIPT_DIR\" does not exist!
+  exit 1
+fi
 
 i=0; 
 while [ $i -lt $arrLen ]; do 
