@@ -3,3 +3,4 @@ suppa_env
 test_alignment.*
 references
 subout.txt
+slurm*out

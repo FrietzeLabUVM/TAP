@@ -58,6 +58,9 @@ else #is gzipped
   gunzip -c $gtf > $bgtf
 fi
 ln -sf $bgtf current.gtf
+
+awk '$3 != "gene" ' current.gtf > current.no_genes.gtf
+
 cd ..
 
 #fasta
@@ -74,14 +77,14 @@ tfa=${tfa}.transcriptome.fa
 
 echo generate transcriptome fasta...
 
-gffread -F -w $tfa -g $bfa ../GTF/current.gtf
+gffread -F -w $tfa -g $bfa ../GTF/current.no_genes.gtf
 ln -sf $tfa transcriptome.fa
 cd ..
 
 echo making SUPPA2 reference...
 
 #suppa2
-SUPPA_BIN=~/lab_bin
+SUPPA_BIN=/gpfs1/home/j/r/jrboyd/lab_bin
 suppa="$SUPPA_BIN/python $SUPPA_BIN/suppa.py"
 
 dest=SUPPA2
