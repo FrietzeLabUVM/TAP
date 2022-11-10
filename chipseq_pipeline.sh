@@ -43,6 +43,7 @@ if [ -z $F1 ]; then echo need fastq1 as -f1! quit; exit 1; fi
 #if [ -z $input_jid ]; then echo need input_jid as -input_jid! quit; exit 1; fi
 if [ ! -z $in_path ]; then F1=${in_path}/${F1}; fi
 F1=${F1//"&"/" "}
+
 for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
 
 #relevant suffixes

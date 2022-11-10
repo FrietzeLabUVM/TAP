@@ -68,15 +68,20 @@ if [ ! -d $(dirname $B) ]; then
   mkdir -p $(dirname $B)
 fi
 
-#if [ -f ${B}.Aligned.sortedByCoord.out.bam ]; then # && [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
-# echo output bam ${B}.Aligned.sortedByCoord.out.bam exists! will not rerun.
-# exit 0
-#fi
 
-#if [ -f ${B}.Aligned.out.bam ]; then # && [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
-# echo output bam ${B}.Aligned.out.bam exists! will not rerun.
-# exit 0
-#fi
+if [ -f ${B}.Aligned.sortedByCoord.out.bam ]; then
+  if [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
+    echo output bam ${B}.Aligned.sortedByCoord.out.bam and ${B}.Aligned.toTranscriptome.out.bam exist! will not rerun alignment.
+    exit 0
+  fi
+fi
+
+if [ -f ${B}.Aligned.out.bam ]; then
+  if [ -f ${B}.Aligned.toTranscriptome.out.bam ]; then
+    echo output bam ${B}.Aligned.out.bam and ${B}.Aligned.toTranscriptome.out.bam exist! will not rerun alignment.
+    exit 0
+  fi
+fi
 
 STAR \
 --runThreadN 12 \
