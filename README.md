@@ -1,3 +1,7 @@
+# TAP 
+
+Transcriptomic Analysis Pipeline
+
 # Basic Usage
 
 These instructions are for people who are running the RNA-seq and ChIP-seq pipelines "as is" and have no need to modify them. The ChIP-seq pipeline is an elaboration on the RNA-seq pipeline and intructions here generally apply to both.  Please read the ChIP-seq specific section for what is different and additional instructions.
