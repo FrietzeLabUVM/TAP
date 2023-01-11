@@ -96,15 +96,15 @@ if [ ! -z $docker ]; then
   fastq_dir=$(for f in $F1 $F2; do echo $(dirname $f); done | sort | uniq)
   arr=($fastq_dir)
   num_uniq=${#arr[@]}
-  if [ $num_uniq != 0 ]; then 
+  if [ $num_uniq != 1 ]; then 
     echo "For docker usage, all fastqs must be in the same directory! Found $num_uniq different directories. Quit!"
     exit 1;
   fi
   F1=${F1//" "/","}
   F2=${F2//" "/","}
   dF=/input
-  dF1=${F1//$fastq_dir/"/input/"}
-  dF2=${F2//$fastq_dir/"/input/"}
+  dF1=${F1//$fastq_dir/"/input"}
+  dF2=${F2//$fastq_dir/"/input"}
   dB=/output/$(basename $B)
   dstar_idx=/reference/$(basename $star_idx)
 
@@ -116,8 +116,7 @@ if [ ! -z $docker ]; then
 #mounting of F1 and F2 is incorrectly as directory
   cmd="docker run \
     -u $(id -u):$(id -g) \
-    -v $(dirname $F1):$(dirname $dF1) \
-    -v $(dirname $F2):$(dirname $dF2) \
+    -v $fastq_dir:/input \
     -v $(dirname $B):$(dirname $dB) \
     -v $star_idx:$dstar_idx \
     --entrypoint STAR\
@@ -154,3 +153,5 @@ cmd="$cmd \
 --outSAMstrandField intronMotif `#cufflinks compatibility`
 "
 echo $cmd
+
+$cmd
