@@ -152,31 +152,29 @@ g=$(cat $CHR_SIZES | awk -v  total=0 '{total = total + $2}; END {print total}')
 # docker for macs2 v1.0
 echo docker is $docker
 if [ -n "$docker" ]; then
-TREAT_BAM
-INPUT_BAM
-OUTDIR
-  dBAM=/input_bam/$(basename $BAM)
+  dTREAT_BAM=/input_treat_bam/$(basename $TREAT_BAM)
+  dINPUT_BAM=/input_input_bam/$(basename $INPUT_BAM)
   dCHR_SIZES=/input_chr_sizes/$(basename $CHR_SIZES)
-  dO=/output_bigwigs/$(basename $O)
+  dOUTDIR=/output_bigwigs/$(basename $OUTDIR)
 
   base_cmd="docker run \
     -u $(id -u):$(id -g) \
-    -v $(dirname $BAM):$(dirname $dBAM) \
+    -v $(dirname $TREAT_BAM):$(dirname $dTREAT_BAM) \
+    -v $(dirname $INPUT_BAM):$(dirname $dINPUT_BAM) \
     -v $(dirname $CHR_SIZES):$(dirname $dCHR_SIZES) \
-    -v $(dirname $O):$(dirname $dO) \
+    -v $OUTDIR:$dOUTDIR \
     --entrypoint"
     
-  cmd_samtools="$base_cmd samtools $docker"
-  cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $docker"
+  cmd_macs2="$base_cmd macs2 $docker"
   cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $docker"
   cmd_bedSort="$base_cmd bedSort $docker"
 
-  BAM=$dBAM
+  TREAT_BAM=$dTREAT_BAM
+  INPUT_BAM=$dINPUT_BAM
   CHR_SIZES=$dCHR_SIZES
-  O=$dO
+  OUTDIR=$dOUTDIR
 else
-  cmd_samtools=samtools
-  cmd_genomeCoverageBed=genomeCoverageBed
+  cmd_macs2=macs2
   cmd_bedGraphToBigWig=bedGraphToBigWig
   cmd_bedSort=bedSort
 fi
@@ -186,7 +184,7 @@ if [ -f $OUTDIR/$PREFIX"_peaks.narrowPeak" ]; then
   echo $PREFIX"_peaks.narrowPeak" exists. macs2 has already been run for $TREAT_BAM.
   echo delete $PREFIX"_peaks.narrowPeak" if you want to rerun macs2.
 else
-  cmd_tight="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --bdg $extra"
+  cmd_tight="$cmd_macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat $stat_val --bdg $extra"
   echo cmd_tight is:
   echo $cmd_tight
   $cmd_tight
@@ -197,7 +195,7 @@ if [ -f $OUTDIR/$PREFIX"_loose_peaks.narrowPeak" ]; then
   echo $PREFIX"_loose_peaks.narrowPeak" exists. macs2 has already been run for $TREAT_BAM.
   echo delete $PREFIX"_loose_peaks.narrowPeak" if you want to rerun macs2.
 else
-  cmd_loose="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n ${PREFIX}_loose -$stat_loose $stat_val_loose $extra"
+  cmd_loose="$cmd_macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n ${PREFIX}_loose -$stat_loose $stat_val_loose $extra"
   echo cmd_loose is:
   echo $cmd_loose
   $cmd_loose
@@ -209,7 +207,7 @@ if [ -f $OUTDIR/$PREFIX"_peaks.broadPeak" ]; then
   echo $PREFIX"_peaks.broadPeak" exists. macs2 has already been run for $TREAT_BAM.
   echo delete $PREFIX"_peaks.broadPeak" if you want to rerun macs2.
 else
-  cmd_broad="macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat_broad $stat_val_broad --broad --broad-cutoff $BROADCUTOFF $extra"
+  cmd_broad="$cmd_macs2 callpeak -t $TREAT_BAM -c $INPUT_BAM -g $g --outdir $OUTDIR -n $PREFIX -$stat_broad $stat_val_broad --broad --broad-cutoff $BROADCUTOFF $extra"
   echo cmd_broad is:
   echo $cmd_broad
   $cmd_broad
@@ -237,14 +235,14 @@ if [ $BDG = "--bdg" ]; then
 	if [ -f $CMP_BDG ] || [ -f ${CMP_BW} ]; then
 		echo skipping bdgcmp for "$TREATMENT", file "$CMP_BDG" or $CMP_BW exists
 	else
-    cmd_bdgcmp="macs2 bdgcmp -t $TREATMENT -c $CONTROL -m $METHOD -o $CMP_BDG"
-    echo cmd_bdgcmp is:
-    echo $cmd_bdgcmp
-		$cmd_bdgcmp
-    cmd_bedSort="bedSort $CMP_BDG $CMP_BDG"
-    echo cmd_bedSort is:
-    echo $cmd_bedSort
-    $cmd_bedSort
+    run_bdgcmp="$cmd_macs2 bdgcmp -t $TREATMENT -c $CONTROL -m $METHOD -o $CMP_BDG"
+    echo run_bdgcmp is:
+    echo $run_bdgcmp
+		$run_bdgcmp
+    run_bedSort="$cmd_bedSort $CMP_BDG $CMP_BDG"
+    echo run_bedSort is:
+    echo $run_bedSort
+    $run_bedSort
 	fi
 
 	#required inputs:
@@ -255,9 +253,9 @@ if [ $BDG = "--bdg" ]; then
 		echo file $CMP_BW exists so bdg2bw not necessary for $inputBegGraph
 		echo nothing done.
 	else
-    cmd_bedGraphToBigWig="bedGraphToBigWig $CMP_BDG $CHR_SIZES $CMP_BW"
-    echo cmd_bedGraphToBigWig is:
-    echo $cmd_bedGraphToBigWig
-    $cmd_bedGraphToBigWig
+    run_bedGraphToBigWig="$cmd_bedGraphToBigWig $CMP_BDG $CHR_SIZES $CMP_BW"
+    echo run_bedGraphToBigWig is:
+    echo $run_bedGraphToBigWig
+    $run_bedGraphToBigWig
 	fi
 fi
