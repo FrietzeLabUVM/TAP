@@ -56,3 +56,18 @@ RUN wget https://github.com/alexdobin/STAR/archive/2.7.10b.tar.gz && \
 RUN pip install macs3 && \
   ln -s /usr/local/bin/macs3 /usr/local/bin/macs2
 
+## salmon
+RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v1.9.0/salmon-1.9.0_linux_x86_64.tar.gz && \
+  tar -xf salmon-1.9.0_linux_x86_64.tar.gz && \
+  cp salmon-1.9.0_linux_x86_64/bin/salmon /usr/local/bin/ && \
+  cp -n salmon-1.9.0_linux_x86_64/lib/* /usr/lib/x86_64-linux-gnu
+
+## suppa2
+RUN pip install SUPPA==2.3 && \
+  git clone https://github.com/comprna/SUPPA && \
+  sed -i '1s/^/\#\!\/usr\/bin\/python3 \n/' SUPPA/suppa.py && \
+  chmod a+x SUPPA/*py && \
+  chmod a+x SUPPA/*pl && \
+  cp -n SUPPA/*py /usr/local/bin/  && \
+  cp -n SUPPA/*pl /usr/local/bin/ 
+  
