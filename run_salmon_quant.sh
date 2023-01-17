@@ -9,22 +9,46 @@
 #SBATCH -p bluemoon                           # Partition to run in
 #SBATCH --mem=8000   
 
-eval "$(/gpfs2/pi-sfrietze/anaconda3/bin/conda shell.bash hook)"
-conda activate /gpfs2/pi-sfrietze/envs/salmon_env 
-
 echo $0 $@
 
-bam=$1
-gtf=$2
-if [ -z $bam ]; then echo need bam as arg1, quit.; exit 1; fi
-if [ ! -f $bam ]; then echo can not find bam $bam, quit.; exit 1; fi
+BAM=$1
+GTF=$2
+docker=$3
 
-out=${bam/.Aligned.toTranscriptome.out.bam/""}.salmon_quant
+if [ -z $BAM ]; then echo need bam as arg1, quit.; exit 1; fi
+if [ ! -f $BAM ]; then echo can not find bam $BAM, quit.; exit 1; fi
 
-if [ $out == ${bam}.salmon_quant ]; then
+OUT=${BAM/.Aligned.toTranscriptome.out.bam/""}.salmon_quant
+
+if [ $OUT == ${BAM}.salmon_quant ]; then
   echo input bam does not seem valid, should end in .Aligned.toTranscriptome.out.bam.
   exit 1
 fi
 
-#if [ -d $out ]; then echo output $out already exists, will not rerun.; exit 0; fi
-salmon quant -p 2 -t $gtf -l A -a $bam -o $out --gencode
+mkdir -p $OUT
+
+# docker for salmon v1.0
+echo docker is $docker
+if [ -n "$docker" ]; then
+  dBAM=/input_bam/$(basename $BAM)
+  dGTF=/input_gtf/$(basename $GTF)
+  dOUT=/output_salmon
+
+  base_cmd="docker run \
+    -u $(id -u):$(id -g) \
+    -v $(dirname $BAM):$(dirname $dBAM) \
+    -v $(dirname $GTF):$(dirname $dGTF) \
+    -v $OUT:$dOUT \
+    --entrypoint"
+    
+  cmd_salmon="$base_cmd salmon $docker"
+
+  BAM=$dBAM
+  GTF=$dGTF
+  OUT=$dOUT
+else
+  cmd_salmon=salmon
+fi
+
+#if [ -d $OUT ]; then echo output $OUT already exists, will not rerun.; exit 0; fi
+$cmd_salmon quant -p 2 -t $GTF -l A -a $BAM -o $OUT --gencode

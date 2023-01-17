@@ -18,19 +18,50 @@ which samtools
 echo LDD
 ldd -r $(which samtools)
 
-b=$1
-if [ -z $b ]; then echo bam file expected as arg1, quit.; exit 1; fi
+BAM=$1
+docker=$2
 
-ob=${b/.Aligned.out.bam/""}.Aligned.sortedByCoord.out.bam
-if [ -f $ob ]; then echo sorted bam file $ob found! rm to rerun; exit 0; fi
+if [ -z $BAM ]; then echo bam file expected as arg1, quit.; exit 1; fi
 
-if [ ! -f $b ]; then echo bam file $b not found! quit.; exit 1; fi
+OUT_BAM=${BAM/.Aligned.out.bam/""}.Aligned.sortedByCoord.out.bam
+if [ -f $OUT_BAM ]; then echo sorted bam file $OUT_BAM found! rm to rerun; exit 0; fi
 
-if [ -f ${ob}.bai ]; then rm ${ob}.bai; fi
-mkdir -p ~/tmp
-samtools sort -T ~/tmp -o $ob $b
-samtools index $ob
+if [ ! -f $BAM ]; then echo bam file $BAM not found! quit.; exit 1; fi
 
-if [ -f ${ob}.bai ]; then rm $b; fi
-echo $ob
+if [ -f ${OUT_BAM}.bai ]; then rm ${OUT_BAM}.bai; fi
+TMP_DIR=~/tmp
+mkdir -p $TMP_DIR
+
+# docker for samtools and UCSC tools v1.0
+echo docker is \"$docker\"
+if [ -n "$docker" ]; then
+  #derive docker paths
+  dBAM=/input_bam/$(basename $BAM)
+  dOUT_BAM=/output_bam/$(basename $OUT_BAM)
+  dTMP_DIR=/user_tmp
+
+  #docker command prefix
+  base_cmd="docker run \
+    -u $(id -u):$(id -g) \
+    -v $(dirname $BAM):$(dirname $dBAM) \
+    -v $(dirname $OUT_BAM):$(dirname $dOUT_BAM) \
+    -v $TMP_DIR:$dTMP_DIR \
+    --entrypoint"
+    
+  #final docker command paths
+  cmd_samtools="$base_cmd samtools $docker"
+
+  #overwrite with docker paths
+  BAM=$dBAM
+  OUT_BAM=$dOUT_BAM
+  TMP_DIR=$dTMP_DIR
+else
+  cmd_samtools=samtools
+fi
+
+samtools sort -T $TMP_DIR -o $OUT_BAM $BAM
+samtools index $OUT_BAM
+
+if [ -f ${OUT_BAM}.bai ]; then rm $BAM; fi
+echo $OUT_BAM
 
