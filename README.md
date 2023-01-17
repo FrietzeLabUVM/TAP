@@ -1,4 +1,8 @@
-<span style="color:blue"> *WORK IN PROGRESS, NOT WORKING YET* </span>.
+# TAP 
+
+Transcriptomic Analysis Pipeline
+
+A variation of this pipeline is [available for ChIPseq](https://github.com/FrietzeLabUVM/TAP/tree/chipseq)
 
 # Basic Usage
 
