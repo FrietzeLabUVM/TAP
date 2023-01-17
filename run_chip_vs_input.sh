@@ -13,6 +13,10 @@ BDG="--bdg"
 no_model=
 extra=""
 
+echo script:
+echo $0
+echo args:
+echo $@
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -22,15 +26,16 @@ while [[ "$#" -gt 0 ]]; do
         -p|--prefix) PREFIX="$2"; shift ;;
         -pval_narrow|--pval_narrow) PVAL="$2"; shift ;;
         -qval_narrow|--qval_narrow) QVAL="$2"; shift ;;
-	-pval_loose|--pval_loose) PVAL_LOOSE="$2"; shift ;;
+	      -pval_loose|--pval_loose) PVAL_LOOSE="$2"; shift ;;
         -qval_loose|--qval_loose) QVAL_LOOSE="$2"; shift ;;
-	-pval_broad|--pval_broad) PVAL_BROAD="$2"; shift ;;
+	      -pval_broad|--pval_broad) PVAL_BROAD="$2"; shift ;;
         -qval_broad|--qval_broad) QVAL_BROAD="$2"; shift ;;
-	-broad_cutoff|--broad_cutoff) BROADCUTOFF="$2"; shift ;;
+	      -broad_cutoff|--broad_cutoff) BROADCUTOFF="$2"; shift ;;
         -g|--gen) GEN="$2"; shift ;;
-	-s|--chrSizes) CHR_SIZES="$2"; shift ;;
+	      -s|--chrSizes) CHR_SIZES="$2"; shift ;;
         -noModel|--noModel) extra="--nomodel --extsize 147"; shift;;
         -no_bdg|--no_bdg) BDG="";;
+        -docker|--docker) docker="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -144,6 +149,37 @@ fi
 #fi
 g=$(cat $CHR_SIZES | awk -v  total=0 '{total = total + $2}; END {print total}')
 
+# docker for macs2 v1.0
+echo docker is $docker
+if [ -n "$docker" ]; then
+TREAT_BAM
+INPUT_BAM
+OUTDIR
+  dBAM=/input_bam/$(basename $BAM)
+  dCHR_SIZES=/input_chr_sizes/$(basename $CHR_SIZES)
+  dO=/output_bigwigs/$(basename $O)
+
+  base_cmd="docker run \
+    -u $(id -u):$(id -g) \
+    -v $(dirname $BAM):$(dirname $dBAM) \
+    -v $(dirname $CHR_SIZES):$(dirname $dCHR_SIZES) \
+    -v $(dirname $O):$(dirname $dO) \
+    --entrypoint"
+    
+  cmd_samtools="$base_cmd samtools $docker"
+  cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $docker"
+  cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $docker"
+  cmd_bedSort="$base_cmd bedSort $docker"
+
+  BAM=$dBAM
+  CHR_SIZES=$dCHR_SIZES
+  O=$dO
+else
+  cmd_samtools=samtools
+  cmd_genomeCoverageBed=genomeCoverageBed
+  cmd_bedGraphToBigWig=bedGraphToBigWig
+  cmd_bedSort=bedSort
+fi
 
 #narrow tight
 if [ -f $OUTDIR/$PREFIX"_peaks.narrowPeak" ]; then
@@ -197,18 +233,18 @@ if [ $BDG = "--bdg" ]; then
 	echo method - $METHOD
 	CMP_BDG=$OUTDIR/$(basename $TREATMENT)
 	CMP_BDG="${CMP_BDG/_treat_pileup.bdg/}"_"$METHOD".bdg
-        CMP_BW=${CMP_BDG/.bdg/.bw}
+  CMP_BW=${CMP_BDG/.bdg/.bw}
 	if [ -f $CMP_BDG ] || [ -f ${CMP_BW} ]; then
 		echo skipping bdgcmp for "$TREATMENT", file "$CMP_BDG" or $CMP_BW exists
 	else
-                cmd_bdgcmp="macs2 bdgcmp -t $TREATMENT -c $CONTROL -m $METHOD -o $CMP_BDG"
-                echo cmd_bdgcmp is:
-                echo $cmd_bdgcmp
+    cmd_bdgcmp="macs2 bdgcmp -t $TREATMENT -c $CONTROL -m $METHOD -o $CMP_BDG"
+    echo cmd_bdgcmp is:
+    echo $cmd_bdgcmp
 		$cmd_bdgcmp
-                cmd_bedSort="bedSort $CMP_BDG $CMP_BDG"
-                echo cmd_bedSort is:
-                echo $cmd_bedSort
-                $cmd_bedSort
+    cmd_bedSort="bedSort $CMP_BDG $CMP_BDG"
+    echo cmd_bedSort is:
+    echo $cmd_bedSort
+    $cmd_bedSort
 	fi
 
 	#required inputs:
@@ -219,9 +255,9 @@ if [ $BDG = "--bdg" ]; then
 		echo file $CMP_BW exists so bdg2bw not necessary for $inputBegGraph
 		echo nothing done.
 	else
-                cmd_bedGraphToBigWig="bedGraphToBigWig $CMP_BDG $CHR_SIZES $CMP_BW"
-                echo cmd_bedGraphToBigWig is:
-                echo $cmd_bedGraphToBigWig
-                $cmd_bedGraphToBigWig
+    cmd_bedGraphToBigWig="bedGraphToBigWig $CMP_BDG $CHR_SIZES $CMP_BW"
+    echo cmd_bedGraphToBigWig is:
+    echo $cmd_bedGraphToBigWig
+    $cmd_bedGraphToBigWig
 	fi
 fi
