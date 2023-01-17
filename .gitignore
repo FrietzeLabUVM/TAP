@@ -1,6 +1,7 @@
 DM6
 suppa_env
-test_alignment.*
+testing/test_alignment.*
+testing_docker/test_alignment.*
 references
 subout.txt
 slurm*out

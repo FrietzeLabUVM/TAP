@@ -16,6 +16,7 @@ while [[ "$#" -gt 0 ]]; do
         -s|--chrSizes) CHR_SIZES="$2"; shift ;;
         -o|--outDir) OUT="$2"; shift ;;
         -pe|--pe) libType=PE ;;
+        -docker|--docker) docker="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -60,9 +61,38 @@ echo TMPDIR is $tmpdir
 mkdir -p $tmpdir
 cd $tmpdir
 
+# docker for samtools and UCSC tools v1.0
+echo docker is $docker
+if [ -n $docker ]; then
+  dBAM=/input_bam/$(basename $BAM)
+  dCHR_SIZES=/input_chr_sizes/$(basename $CHR_SIZES)
+  dO=/output_bigwigs/$(basename $O)
+
+  base_cmd="docker run \
+    -u $(id -u):$(id -g) \
+    -v $(dirname $BAM):$(dirname $dBAM) \
+    -v $(dirname $CHR_SIZES):$(dirname $dCHR_SIZES) \
+    -v $(dirname $O):$(dirname $dO) \
+    --entrypoint"
+    
+  cmd_samtools="$base_cmd samtools $docker"
+  cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $docker"
+  cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $docker"
+  cmd_bedSort="$base_cmd bedSort $docker"
+
+  BAM=$dBAM
+  CHR_SIZES=$dCHR_SIZES
+  O=$dO
+else
+  cmd_samtools=samtools
+  cmd_genomeCoverageBed=genomeCoverageBed
+  cmd_bedGraphToBigWig=bedGraphToBigWig
+  cmd_bedSort=bedSort
+fi
+
 #for PE need to filter for read 1
 if [ libType = PE ]; then
-  cmd0="samtools view -hb -f 64 $BAM > read1.bam"
+  cmd0="$cmd_samtools view -hb -f 64 $BAM > read1.bam"
   echo running:
   echo $cmd0
   $cmd0
@@ -76,8 +106,8 @@ if [ -f $F_FILE ]; then
   FACTOR=$(cat $F_FILE)
 else
   echo calc factor, save to $F_FILE
-  echo samtools view -c $BAM \| awk \'{print \$1}\'
-  FACTOR=$(echo "scale=5; 1000000/$(samtools view -c $BAM | awk '{print $1}')" | bc)
+  echo $cmd_samtools view -c $BAM \| awk \'{print \$1}\'
+  FACTOR=$(echo "scale=5; 1000000/$($cmd_samtools view -c $BAM | awk '{print $1}')" | bc)
   echo $FACTOR > $F_FILE
 fi
 echo FACTOR is $FACTOR
@@ -114,14 +144,14 @@ for splice in show hide; do
   if [ -f $BDG ]; then 
     echo skip $BDG, delete to rerun; 
   else 
-    cmd1="genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG"; 
-    cmd2="bedSort $BDG $BDG"
+    cmd1="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG"; 
+    cmd2="$cmd_bedSort $BDG $BDG"
     echo running: 
     echo $cmd1
     $cmd1
     echo $cmd2
     $cmd2 
-bedSort $BDG $BDG; fi
+$cmd_bedSort $BDG $BDG; fi
 
   BW=${BDG/%.bdg/.bw}
   echo make bigwig $BW
@@ -129,7 +159,7 @@ bedSort $BDG $BDG; fi
   if [ -f $BW ]; then 
     echo skip bigwig $BW, delete to rerun; 
   else 
-    cmd3="bedGraphToBigWig $BDG $CHR_SIZES $BW"; 
+    cmd3="$cmd_bedGraphToBigWig $BDG $CHR_SIZES $BW"; 
     echo $cmd3; 
     $cmd3; 
   fi

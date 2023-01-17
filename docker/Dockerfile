@@ -32,9 +32,10 @@ RUN apt-get install software-properties-common -y && \
 #   cd bedtools2/ && \
 #   make && \
 #   mv bin/* /usr/local/bin/
-RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary && \
-  mv bedtools.static.binary /usr/bin/bedtools && \
-  chmod a+x /usr/bin/bedtools
+#RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.static.binary && \
+#  mv bedtools.static.binary /usr/bin/bedtools && \
+#  chmod a+x /usr/bin/bedtools
+RUN apt-get install bedtools
 
 ## bcftools
 RUN wget https://github.com/samtools/bcftools/releases/download/1.10.2/bcftools-1.10.2.tar.bz2 && \

@@ -129,7 +129,7 @@ echo bw_jid $bw_jid
 #SNPs
 exactSNP_sub_args="-d afterok:$sort_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
-exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta $docker_arg)")
+exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh -b $sort_bam -fa $fasta -docker $docker_arg)")
 
 echo exactSNP_jid $exact_jid
 
