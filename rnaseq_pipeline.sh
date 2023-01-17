@@ -7,6 +7,7 @@ SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 mode=PE
 sub_mode=sbatch
+docker=""
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -26,6 +27,7 @@ while [[ "$#" -gt 0 ]]; do
         -SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
+        -docker|--docker) docker="$2"; shift ;;
         -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPTS/help_msg.txt; exit 1 ;;
     esac
@@ -115,6 +117,11 @@ sort_bam=${align_path}/${root}${suf_sort_bam}
 salmon_out=${align_path}/${root}${suf_salmon_quant}
 featr_out=${align_path}/${root}${suf_featr_count}
 
+docker_arg=""
+if [ ! -z $docker ]; then
+  docker_arg="--docker $docker"
+fi
+
 parse_jid () { #parses the job id from output of qsub
         #echo $1
         if [ -z "$1" ]; then
@@ -149,7 +156,7 @@ $qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
 F1=${F1//" "/"&"}
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
-align_qsub=$($qsub_cmd -J STAR_align $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode)
+align_qsub=$($qsub_cmd -J STAR_align $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode $docker_arg)
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
@@ -157,7 +164,7 @@ echo align_jid $align_jid
 if [ -d $rDNA_index ] && [ ! -z $rDNA_index ] ; then
   align_rDNA_path=${align_path}/rDNA
   mkdir -p $align_rDNA_path
-  rdna_qsub=$($qsub_cmd -J STAR_rDNA $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
+  rdna_qsub=$($qsub_cmd -J STAR_rDNA $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $docker_arg)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid
 else
@@ -168,25 +175,25 @@ fi
 #tx quant
 salmon_sub_args="-d afterok:$align_jid -J salmon_quant"
 if [ $sub_mode = "bash" ]; then salmon_sub_args=""; fi
-salmon_jid=$(parse_jid "$($qsub_cmd $salmon_sub_args $SCRIPTS/run_salmon_quant.sh $tx_bam $tx)")
+salmon_jid=$(parse_jid "$($qsub_cmd $salmon_sub_args $SCRIPTS/run_salmon_quant.sh $tx_bam $tx $docker_arg)")
 echo salmon_jid $salmon_jid
 suppa2_sub_args="-d afterok:$salmon_jid -J suppa2"
 if [ $sub_mode = "bash" ]; then suppa2_sub_args=""; fi
-suppa2_jid=$(parse_jid "$($qsub_cmd $suppa2_sub_args $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref)")
+suppa2_jid=$(parse_jid "$($qsub_cmd $suppa2_sub_args $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref $docker_arg)")
 echo suppa2_jid $suppa2_jid
 #sort and index
 index_sub_args="-d afterok:$align_jid -J bsortindex"
 if [ $sub_mode = "bash" ]; then index_sub_args=""; fi
-index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam)")
+index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam $docker_arg)")
 echo index_jid $index_jid
 
 #bigwigs
 bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 if [ $mode = SE ]; then
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs)
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $docker_arg)
 else
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe)
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $docker_arg)
 fi
 bw_jid=$(parse_jid "$bw_qsub")
 echo bw_jid $bw_jid
@@ -194,7 +201,7 @@ echo bw_jid $bw_jid
 #SNPs
 exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
-exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta)")
+exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh $sort_bam $fasta $docker_arg)")
 
 echo exactSNP_jid $exact_jid
 

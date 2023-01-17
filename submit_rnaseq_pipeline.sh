@@ -28,6 +28,7 @@ done
 
 read_mode=PE
 sub_mode=sbatch
+docker=""
 
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
@@ -55,6 +56,7 @@ if [ ! -z $cfg ]; then
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
+  -docker|--docker) docker="$2"; shift ;;
 	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
@@ -81,6 +83,7 @@ while [[ "$#" -gt 0 ]]; do
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
+        -docker|--docker) docker="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
     esac
     shift
@@ -112,6 +115,7 @@ if [ ! -z $gtf ]; then cmd="$cmd --gtf $gtf"; fi
 if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
 if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
+if [ ! -z $docker ]; then cmd="$cmd --docker $docker"; fi
 
 if [ $read_mode = SE ]; then cmd="$cmd -SE"; fi
 if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi 

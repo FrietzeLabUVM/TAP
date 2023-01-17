@@ -86,38 +86,40 @@ fi
 
 echo STAR index is $star_idx
 
-# docker
-echo docker is $docker
-if [ ! -z $docker ]; then
-  #derive mount points for input files inside docker
-  #fastq files may be , delim lists of fastqs
+# docker RNA v1.0
+echo docker is "$docker"
+if [ -n "$docker" ]; then
+  # Derive mount points for input files inside docker
+  # Fastq files may be "," delim lists of fastqs. This requires special handling.
   F1=${F1//","/" "}
   F2=${F2//","/" "}
-  fastq_dir=$(for f in $F1 $F2; do echo $(dirname $f); done | sort | uniq)
-  arr=($fastq_dir)
+  fastq_dir=$(for f in $F1 $F2; do dirname "$f"; done | sort | uniq)
+  #arr=($fastq_dir)
+  mapfile -t arr <<< "$fastq_dir"
   num_uniq=${#arr[@]}
-  if [ $num_uniq != 1 ]; then 
+  if [ "$num_uniq" != 1 ]; then 
     echo "For docker usage, all fastqs must be in the same directory! Found $num_uniq different directories. Quit!"
     exit 1;
   fi
   F1=${F1//" "/","}
   F2=${F2//" "/","}
   dF=/input
-  dF1=${F1//$fastq_dir/"/input"}
-  dF2=${F2//$fastq_dir/"/input"}
-  dB=/output/$(basename $B)
-  dstar_idx=/reference/$(basename $star_idx)
+  dF1=${F1//$fastq_dir/$dF}
+  dF2=${F2//$fastq_dir/$dF}
+  dB=/output/$(basename "$B")
+  dstar_idx=/reference/$(basename "$star_idx")
 
-  echo docker F1 is $dF1
-  echo docker F2 is $dF2
-  echo docker B is $dB
-  echo docker star_idx is $dstar_idx
+  echo docker F1 is "$dF1"
+  echo docker F2 is "$dF2"
+  echo docker B is "$dB"
+  echo docker star_idx is "$dstar_idx"
 
-#mounting of F1 and F2 is incorrectly as directory
+  dir_B=$(dirname "$B")
+  dir_dB=$(dirname "$dB")
   cmd="docker run \
     -u $(id -u):$(id -g) \
-    -v $fastq_dir:/input \
-    -v $(dirname $B):$(dirname $dB) \
+    -v $fastq_dir:$dF \
+    -v $dir_B:$dir_dB \
     -v $star_idx:$dstar_idx \
     --entrypoint STAR\
     $docker \
@@ -146,12 +148,11 @@ cmd="$cmd \
 --alignIntronMin 20 \
 --alignIntronMax 1000000 \
 --alignMatesGapMax 1000000 \
---outFileNamePrefix $B"." `#output params` \
+--outFileNamePrefix ${B}. `#output params` \
 --outSAMtype BAM Unsorted \
 --quantMode TranscriptomeSAM GeneCounts \
 --twopassMode Basic \
 --outSAMstrandField intronMotif `#cufflinks compatibility`
 "
-echo $cmd
-
+echo "$cmd"
 $cmd

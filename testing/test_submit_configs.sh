@@ -1,11 +1,11 @@
-
 scripts=~/lab_shared/scripts/vacc_rnaseq_pipeline
+cd $scripts
 test_dir=~/lab_shared/scripts/vacc_rnaseq_pipeline/testing
 #args2="-noSub"
 args="-i $test_dir/test_data -ref $(readlink -f ~/lab_shared/indexes/DM6)"
 
 #no config file
-bash $scripts/submit_rnaseq_pipeline.sh -o $test_dir/test_alignment.no_config $args $args2
+bash $scripts/submit_rnaseq_pipeline.sh -o $test_dir/$test_alignment.no_config $args $args2
 
 #config that just runs sample 2
 bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.basic.csv -o $test_dir/test_alignment.basic $args $args2

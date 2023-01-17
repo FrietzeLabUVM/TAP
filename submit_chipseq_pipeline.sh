@@ -29,6 +29,7 @@ done
 read_mode=PE
 sub_mode=sbatch
 no_model=
+docker=""
 
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
@@ -56,6 +57,7 @@ if [ ! -z $cfg ]; then
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
         -noModel|--noModel) no_model="--noModel" ;;
+  -docker|--docker) docker="$2"; shift ;;
 	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
@@ -83,6 +85,7 @@ while [[ "$#" -gt 0 ]]; do
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
         -noModel|--noModel) no_model="--noModel" ;;
+        -docker|--docker) docker="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
     esac
     shift
@@ -115,6 +118,7 @@ if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
 if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
 if [ ! -z $no_model ]; then cmd="$cmd --noModel"; fi
+if [ ! -z $docker ]; then cmd="$cmd --docker $docker"; fi
 
 if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
 if [ ! -d $star_index ]; then echo star_index $star_index not found!; exit 1; fi

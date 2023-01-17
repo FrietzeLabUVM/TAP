@@ -24,6 +24,7 @@ while [[ "$#" -gt 0 ]]; do
         -o|--out) B="$2"; shift ;;
         -wd|--workdir) wd="$2"; shift ;;
         -idx|--starindex) star_idx="$2"; shift ;;
+        -docker|--docker) docker="$2"; shift ;;
         -SE|--SE) mode=SE ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
@@ -78,15 +79,66 @@ fi
 # exit 0
 #fi
 
-STAR \
---runThreadN 12 \
---readFilesIn $F1 $F2 \
---readFilesCommand gunzip -c \
---genomeDir $star_idx \
---alignIntronMax 1 \
---outFilterMismatchNmax 999 \
---outFilterMismatchNoverReadLmax 0.04 \
---alignMatesGapMax 1000000 \
---outFileNamePrefix $B"." `#output params` \
---outSAMtype BAM Unsorted
 
+echo STAR index is $star_idx
+
+# docker RNA v1.0
+echo docker is $docker
+if [ ! -z $docker ]; then
+  # Derive mount points for input files inside docker
+  # Fastq files may be "," delim lists of fastqs. This requires special handling.
+  F1=${F1//","/" "}
+  F2=${F2//","/" "}
+  fastq_dir=$(for f in $F1 $F2; do echo $(dirname $f); done | sort | uniq)
+  arr=($fastq_dir)
+  num_uniq=${#arr[@]}
+  if [ $num_uniq != 1 ]; then 
+    echo "For docker usage, all fastqs must be in the same directory! Found $num_uniq different directories. Quit!"
+    exit 1;
+  fi
+  F1=${F1//" "/","}
+  F2=${F2//" "/","}
+  dF=/input
+  dF1=${F1//$fastq_dir/"/input"}
+  dF2=${F2//$fastq_dir/"/input"}
+  dB=/output/$(basename $B)
+  dstar_idx=/reference/$(basename $star_idx)
+
+  echo docker F1 is $dF1
+  echo docker F2 is $dF2
+  echo docker B is $dB
+  echo docker star_idx is $dstar_idx
+
+  cmd="docker run \
+    -u $(id -u):$(id -g) \
+    -v $fastq_dir:/input \
+    -v $(dirname $B):$(dirname $dB) \
+    -v $star_idx:$dstar_idx \
+    --entrypoint STAR\
+    $docker \
+    "
+
+  #update STAR command inputs to use docker paths
+  F1=$dF1
+  F2=$dF2
+  B=$dB
+  star_idx=$dstar_idx
+  #echo $cmd
+else 
+  cmd=STAR
+fi
+
+cmd="$cmd \
+  --runThreadN 12 \
+  --readFilesIn $F1 $F2 \
+  --readFilesCommand gunzip -c \
+  --genomeDir $star_idx \
+  --alignIntronMax 1 \
+  --outFilterMismatchNmax 999 \
+  --outFilterMismatchNoverReadLmax 0.04 \
+  --alignMatesGapMax 1000000 \
+  --outFileNamePrefix ${B}. `#output params` \
+  --outSAMtype BAM Unsorted
+"
+echo "$cmd"
+$cmd
