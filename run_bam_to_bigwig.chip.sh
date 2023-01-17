@@ -39,10 +39,10 @@ if [ ! -f $CHR_SIZES ]; then
   echo add CHR_SIZES= in qsub or supply as second arg
   exit 1
 fi
-
+W
 mkdir -p $O
 O=$(readlink -f $O)
-
+echo output directory is $O
 name=${BAM/.bam/""}
 name=$(basename $name)
 tmpdir=$O/tmp_bam2bw.${name}
@@ -50,8 +50,8 @@ mkdir $tmpdir
 cd $tmpdir
 
 # docker for samtools and UCSC tools v1.0
-echo docker is $docker
-if [ -n $docker ]; then
+echo docker is \"$docker\"
+if [ -n "$docker" ]; then
   dBAM=/input_bam/$(basename $BAM)
   dCHR_SIZES=/input_chr_sizes/$(basename $CHR_SIZES)
   dO=/output_bigwigs/$(basename $O)
@@ -77,6 +77,11 @@ else
   cmd_bedGraphToBigWig=bedGraphToBigWig
   cmd_bedSort=bedSort
 fi
+
+echo "samtools command is: $cmd_samtools"
+echo "genomeCoverageBed command is: $cmd_genomeCoverageBed"
+echo "bedGraphToBigWig command is: $cmd_bedGraphToBigWig"
+echo "bedSort command is: $cmd_bedSort"
 
 #for PE need to filter for read 1
 if [ libType = PE ]; then

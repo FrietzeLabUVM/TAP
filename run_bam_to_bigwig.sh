@@ -63,7 +63,7 @@ cd $tmpdir
 
 # docker for samtools and UCSC tools v1.0
 echo docker is $docker
-if [ -n $docker ]; then
+if [ -n "$docker" ]; then
   dBAM=/input_bam/$(basename $BAM)
   dCHR_SIZES=/input_chr_sizes/$(basename $CHR_SIZES)
   dO=/output_bigwigs/$(basename $O)
