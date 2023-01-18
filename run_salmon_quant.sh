@@ -13,7 +13,7 @@ echo $0 $@
 
 BAM=$1
 GTF=$2
-docker=$3
+docker=$4
 
 if [ -z $BAM ]; then echo need bam as arg1, quit.; exit 1; fi
 if [ ! -f $BAM ]; then echo can not find bam $BAM, quit.; exit 1; fi

@@ -13,17 +13,18 @@
 
 echo $0 $@
 
-echo WHICH
-which samtools
-echo LDD
-ldd -r $(which samtools)
+#echo WHICH
+#which samtools
+#echo LDD
+#ldd -r $(which samtools)
 
 BAM=$1
-docker=$2
+docker=$3
 
 if [ -z $BAM ]; then echo bam file expected as arg1, quit.; exit 1; fi
-
+echo BAM is $BAM
 OUT_BAM=${BAM/.Aligned.out.bam/""}.Aligned.sortedByCoord.out.bam
+echo OUT_BAM is $OUT_BAM
 if [ -f $OUT_BAM ]; then echo sorted bam file $OUT_BAM found! rm to rerun; exit 0; fi
 
 if [ ! -f $BAM ]; then echo bam file $BAM not found! quit.; exit 1; fi
@@ -39,6 +40,10 @@ if [ -n "$docker" ]; then
   dBAM=/input_bam/$(basename $BAM)
   dOUT_BAM=/output_bam/$(basename $OUT_BAM)
   dTMP_DIR=/user_tmp
+
+  echo docker BAM is $dBAM
+  echo docker OUT_BAM is $dOUT_BAM
+  echo docker TMP_DIR is $dTMP_DIR
 
   #docker command prefix
   base_cmd="docker run \
@@ -59,8 +64,8 @@ else
   cmd_samtools=samtools
 fi
 
-samtools sort -T $TMP_DIR -o $OUT_BAM $BAM
-samtools index $OUT_BAM
+$cmd_samtools sort -T $TMP_DIR -o $OUT_BAM $BAM
+$cmd_samtools index $OUT_BAM
 
 if [ -f ${OUT_BAM}.bai ]; then rm $BAM; fi
 echo $OUT_BAM

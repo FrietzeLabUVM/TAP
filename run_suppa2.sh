@@ -10,7 +10,7 @@ SALMON_RESULT=$1
 GTF=$2
 SUPPA_REF=$3
 SUPPA_REF_local=$SUPPA_REF
-docker=$4
+docker=$5
 
 echo SALMON_RESULT is $SALMON_RESULT
 echo GTF is $GTF
@@ -29,7 +29,6 @@ cut -f 1,4 $raw | awk 'NR > 1' >> $tpm
 # docker for suppa2 v1.0
 echo docker is $docker
 if [ -n "$docker" ]; then
-  dBAM=/input_bam/$(basename $BAM)
   dGTF=/input_gtf/$(basename $GTF)
   dSALMON_RESULT=/output_salmon
   dSUPPA_REF=/suppa_ref
@@ -37,7 +36,6 @@ if [ -n "$docker" ]; then
 
   base_cmd="docker run \
     -u $(id -u):$(id -g) \
-    -v $(dirname $BAM):$(dirname $dBAM) \
     -v $(dirname $GTF):$(dirname $dGTF) \
     -v $SALMON_RESULT:$dSALMON_RESULT \
     -v $SUPPA_REF:$dSUPPA_REF \
@@ -45,7 +43,6 @@ if [ -n "$docker" ]; then
     
   cmd_suppa="$base_cmd suppa.py $docker"
 
-  BAM=$dBAM
   GTF=$dGTF
   SALMON_RESULT=$dSALMON_RESULT
   SUPPA_REF=$dSUPPA_REF
@@ -54,21 +51,24 @@ else
 fi
 
 echo running isoforms
-$cmd_suppa psiPerIsoform -g ${GTF} -e $SALMON_RESULT/tpm.txt -o $SALMON_RESULT/suppa2
-
+cmd_full="$cmd_suppa psiPerIsoform -g ${GTF} -e $SALMON_RESULT/tpm.txt -o $SALMON_RESULT/suppa2"
+echo "$cmd_full"
+$cmd_full
 
 for ioe in $SUPPA_REF_local/*ioe; do
-  name=$(basename $ioe)
-  name=${name/$(basename $GTF)"._"/""}
+  name=$(basename "$ioe")
+  name=${name/$(basename "$GTF")"._"/""}
   name=${name/suppa2./""}
   name=${name/_strict.ioe/""}
   #name=$(dirname $SALMON_RESULT)
-  echo running $name
+  echo running "$name"
   #local ioe needs to be translated to docker path
   if [ -n "$docker" ]; then
-    ioe={$SUPPA_REF}/$(basename ${ioe})
+    ioe=${SUPPA_REF}/$(basename "${ioe}")
   fi
 
-  $cmd_suppa psiPerEvent -i ${ioe} -e $SALMON_RESULT/tpm.txt -o $SALMON_RESULT/suppa2.alternate_events.${name}
+  cmd_full="$cmd_suppa psiPerEvent -i ${ioe} -e $SALMON_RESULT/tpm.txt -o $SALMON_RESULT/suppa2.alternate_events.${name}"
+  echo "$cmd_full"
+  $cmd_full
 done
 
