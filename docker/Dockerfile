@@ -74,3 +74,16 @@ RUN pip install SUPPA==2.3 && \
 #RUN wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64.v385/bedSort  && \
 #  chmod a+x bedSort   && \
 #  mv bedSort /usr/local/bin/
+
+## bedGraphToBigWig
+RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig && \
+  chmod a+x bedGraphToBigWig  && \
+  mv bedGraphToBigWig /usr/local/bin/
+
+## All UCSC, too big 3.8G
+# RUN apt-get install rsync -y && \
+#   mkdir ucsc && \
+#   cd ucsc && \
+#   rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/linux.x86_64/ ./ && \
+#   chmod a+x * && \
+#   mv * /usr/local/bin/
