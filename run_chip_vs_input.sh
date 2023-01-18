@@ -237,9 +237,10 @@ if [ $BDG = "--bdg" ]; then
 
   CMP_BDG_local=$OUT_DIR_local/$(basename $TREATMENT)
 	CMP_BDG_local="${CMP_BDG_local/_treat_pileup.bdg/}"_"$METHOD".bdg
+  CMP_BW_local=${CMP_BDG_local/.bdg/.bw}
 
-	if [ -f $CMP_BDG ] || [ -f ${CMP_BW} ]; then
-		echo skipping bdgcmp for "$TREATMENT", file "$CMP_BDG" or $CMP_BW exists
+	if [ -f $CMP_BDG_local ] || [ -f ${CMP_BW_local} ]; then
+		echo skipping bdgcmp for "$TREATMENT", file "$CMP_BDG_local" or $CMP_BW_local exists
 	else
     run_bdgcmp="$cmd_macs2 bdgcmp -t $TREATMENT -c $CONTROL -m $METHOD -o $CMP_BDG"
     echo run_bdgcmp is:
@@ -248,15 +249,17 @@ if [ $BDG = "--bdg" ]; then
     run_sortBed="$cmd_sortBed -i $CMP_BDG"
     echo run_sortBed is:
     echo $run_sortBed to $CMP_BDG_local
-    $run_sortBed > $CMP_BDG_local
+    $run_sortBed > ${CMP_BDG_local}.tmp
+    mv ${CMP_BDG_local}.tmp ${CMP_BDG_local}
+
 	fi
 
 	#required inputs:
 	echo input - $CMP_BDG
 	echo chrSizes - $CHR_SIZES
 	echo output - $CMP_BW
-	if [ -f $CMP_BW ]; then
-		echo file $CMP_BW exists so bdg2bw not necessary for $inputBegGraph
+	if [ -f $CMP_BW_local ]; then
+		echo file $CMP_BW_local exists so bdg2bw not necessary for $inputBegGraph
 		echo nothing done.
 	else
     run_bedGraphToBigWig="$cmd_bedGraphToBigWig $CMP_BDG $CHR_SIZES $CMP_BW"

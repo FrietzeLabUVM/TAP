@@ -140,7 +140,7 @@ for splice in hide; do
   if [ -f $BDG_local ]; then 
     echo skip $BDG_local, delete to rerun; 
   else 
-    cmd="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG_local"
+    cmd="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES"
     echo $cmd to $BDG_local
     $cmd > $BDG_local
     cmd_sort="$cmd_sortBed -i $BDG"
