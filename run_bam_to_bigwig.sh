@@ -78,7 +78,7 @@ if [ -n "$docker" ]; then
   cmd_samtools="$base_cmd samtools $docker"
   cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $docker"
   cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $docker"
-  cmd_bedSort="$base_cmd bedSort $docker"
+  cmd_sortBed="$base_cmd sortBed $docker"
 
   BAM=$dBAM
   CHR_SIZES=$dCHR_SIZES
@@ -87,7 +87,7 @@ else
   cmd_samtools=samtools
   cmd_genomeCoverageBed=genomeCoverageBed
   cmd_bedGraphToBigWig=bedGraphToBigWig
-  cmd_bedSort=bedSort
+  cmd_sortBed=sortBed
 fi
 
 #for PE need to filter for read 1
@@ -145,13 +145,14 @@ for splice in show hide; do
     echo skip $BDG, delete to rerun; 
   else 
     cmd1="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG"; 
-    cmd2="$cmd_bedSort $BDG $BDG"
+    cmd2="$cmd_sortBed -i $BDG > $BDG"
     echo running: 
     echo $cmd1
     $cmd1
     echo $cmd2
     $cmd2 
-$cmd_bedSort $BDG $BDG; fi
+    $cmd_sortBed -i $BDG > $BDG; 
+  fi
 
   BW=${BDG/%.bdg/.bw}
   echo make bigwig $BW

@@ -167,7 +167,7 @@ if [ -n "$docker" ]; then
     
   cmd_macs2="$base_cmd macs2 $docker"
   cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $docker"
-  cmd_bedSort="$base_cmd bedSort $docker"
+  cmd_sortBed="$base_cmd sortBed $docker"
 
   TREAT_BAM=$dTREAT_BAM
   INPUT_BAM=$dINPUT_BAM
@@ -176,7 +176,7 @@ if [ -n "$docker" ]; then
 else
   cmd_macs2=macs2
   cmd_bedGraphToBigWig=bedGraphToBigWig
-  cmd_bedSort=bedSort
+  cmd_sortBed=sortBed
 fi
 
 #narrow tight
@@ -239,10 +239,10 @@ if [ $BDG = "--bdg" ]; then
     echo run_bdgcmp is:
     echo $run_bdgcmp
 		$run_bdgcmp
-    run_bedSort="$cmd_bedSort $CMP_BDG $CMP_BDG"
-    echo run_bedSort is:
-    echo $run_bedSort
-    $run_bedSort
+    run_sortBed="$cmd_sortBed -i $CMP_BDG > $CMP_BDG"
+    echo run_sortBed is:
+    echo $run_sortBed
+    $run_sortBed
 	fi
 
 	#required inputs:
