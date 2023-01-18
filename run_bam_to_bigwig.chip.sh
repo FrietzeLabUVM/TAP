@@ -143,7 +143,7 @@ for splice in hide; do
     cmd="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG_local"
     echo $cmd to $BDG_local
     $cmd > $BDG_local
-    cmd_sort="$cmd_sortBed -i $BDG > $BDG"
+    cmd_sort="$cmd_sortBed -i $BDG"
     echo $cmd_sort to $BDG_local
     $cmd_sort > ${BDG_local}.tmp
     mv ${BDG_local}.tmp $BDG_local
