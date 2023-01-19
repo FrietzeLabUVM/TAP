@@ -102,14 +102,15 @@ fi
 
 
 F_FILE=${OUT_DIR}/${name}.factor
-if [ -f $F_FILE ]; then
-  echo skip factor calc, read from $F_FILE
-  FACTOR=$(cat $F_FILE)
+F_FILE_local=${OUT_DIR_local}/${name}.factor
+if [ -f $F_FILE_local ]; then
+  echo skip factor calc, read from $F_FILE_local
+  FACTOR=$(cat $F_FILE_local)
 else
-  echo calc factor, save to $F_FILE
+  echo calc factor, save to $F_FILE_local
   echo $cmd_samtools view -c $BAM \| awk \'{print \$1}\'
   FACTOR=$(echo "scale=5; 1000000/$($cmd_samtools view -c $BAM | awk '{print $1}')" | bc)
-  echo $FACTOR > $F_FILE
+  echo $FACTOR > $F_FILE_local
 fi
 echo FACTOR is $FACTOR
 
