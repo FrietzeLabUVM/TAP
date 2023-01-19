@@ -94,7 +94,7 @@ if [ libType = PE ]; then
 fi
 
 
-F_FILE=${OUT_DIR}/${name}.factor
+F_FILE=${OUT_DIR_local}/${name}.factor
 if [ -f $F_FILE ]; then
   echo skip factor calc
   FACTOR=$(cat $F_FILE)
@@ -140,14 +140,14 @@ for splice in hide; do
   if [ -f $BDG_local ]; then 
     echo skip $BDG_local, delete to rerun; 
   else 
-    cmd="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES"
+    cmd="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM $CHR_SIZES"
     echo $cmd to $BDG_local
     $cmd > $BDG_local
     cmd_sort="$cmd_sortBed -i $BDG"
     echo $cmd_sort to $BDG_local
     $cmd_sort > ${BDG_local}.tmp
     mv ${BDG_local}.tmp $BDG_local
-    #$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM -g $CHR_SIZES > $BDG
+    #$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM $CHR_SIZES > $BDG
     #$cmd_sortBed -i $BDG > $BDG
   fi
 
