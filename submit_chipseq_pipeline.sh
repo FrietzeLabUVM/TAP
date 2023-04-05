@@ -26,7 +26,7 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-read_mode=PE
+read_mode=SE
 sub_mode=sbatch
 no_model=
 docker=""
@@ -51,12 +51,12 @@ if [ ! -z $cfg ]; then
 	-s|--suppaRef) suppa_ref="$2"; shift ;;
 	-g|--gtf) gtf="$2"; shift ;;
 	-fa|--fasta) fasta="$2"; shift ;;
-        -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
-        -SE|--SE) read_mode=SE ;;
-        -noSub|--noSub) sub_mode=bash ;;
-        -p|--pipeline) pipeline="$2"; shift ;;
-        -sl|--scriptLocation) scripts="$2"; shift ;;
-        -noModel|--noModel) no_model="--noModel" ;;
+  -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
+  -PE|--PE) read_mode=PE ;;
+  -noSub|--noSub) sub_mode=bash ;;
+  -p|--pipeline) pipeline="$2"; shift ;;
+  -sl|--scriptLocation) scripts="$2"; shift ;;
+  -noModel|--noModel) no_model="--noModel" ;;
   -docker|--docker) docker="$2"; shift ;;
 	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
@@ -80,7 +80,7 @@ while [[ "$#" -gt 0 ]]; do
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
-        -SE|--SE) read_mode=SE ;;
+        -PE|--PE) read_mode=PE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;

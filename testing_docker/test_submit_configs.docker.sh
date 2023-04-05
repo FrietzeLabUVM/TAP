@@ -1,6 +1,6 @@
 scripts=~/lab_shared/scripts/vacc_rnaseq_pipeline
 dock_test_dir=$scripts/testing_docker
-cd $dock_test_dir
+#cd $dock_test_dir
 test_dir=~/lab_shared/scripts/vacc_rnaseq_pipeline/testing
 #args2="-noSub"
 args3="--docker tap"
@@ -9,7 +9,6 @@ args="-i $test_dir/test_data -ref $(readlink -f ~/lab_shared/indexes/DM6)"
 #no config file
 bash $scripts/submit_rnaseq_pipeline.sh -o $dock_test_dir/test_alignment.no_config $args $args2 ${args3}
 
-exit 0
 #config that just runs sample 2
 bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_data/test_dm6_config.basic.csv -o $dock_test_dir/test_alignment.basic $args $args2 ${args3}
 

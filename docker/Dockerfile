@@ -87,3 +87,11 @@ RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig 
 #   rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/linux.x86_64/ ./ && \
 #   chmod a+x * && \
 #   mv * /usr/local/bin/
+
+## exactSNP
+RUN wget -N https://sourceforge.net/projects/subread/files/subread-2.0.3/subread-2.0.3-source.tar.gz && \
+  tar -xf subread-2.0.3-source.tar.gz  && \
+  cd subread-2.0.3-source/src && \
+  make -f Makefile.Linux && \
+  cd ../bin/ && \
+  mv * /usr/local/bin/

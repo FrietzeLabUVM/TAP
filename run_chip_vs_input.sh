@@ -12,6 +12,7 @@
 BDG="--bdg"
 no_model=
 extra=""
+read_mode=SE
 
 echo script:
 echo $0
@@ -31,6 +32,7 @@ while [[ "$#" -gt 0 ]]; do
 	      -pval_broad|--pval_broad) PVAL_BROAD="$2"; shift ;;
         -qval_broad|--qval_broad) QVAL_BROAD="$2"; shift ;;
 	      -broad_cutoff|--broad_cutoff) BROADCUTOFF="$2"; shift ;;
+        -PE|--PE) read_mode=PE; shift ;;
         -g|--gen) GEN="$2"; shift ;;
 	      -s|--chrSizes) CHR_SIZES="$2"; shift ;;
         -noModel|--noModel) extra="--nomodel --extsize 147"; shift;;
@@ -54,6 +56,7 @@ echo QVAL is $QVAL_LOOSE
 echo PVAL is $PVAL_BROAD
 echo QVAL is $QVAL_BROAD
 echo BROADCUTOFF is $BROADCUTOFF
+echo read_mode is $read_mode
 echo GEN is $GEN
 echo CHR_SIZES is $CHR_SIZES
 echo macs2 on $(basename $TREAT_BAM):$(basename $INPUT_BAM)
