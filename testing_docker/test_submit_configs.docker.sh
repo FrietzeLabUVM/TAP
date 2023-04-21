@@ -1,9 +1,11 @@
-scripts=~/lab_shared/scripts/vacc_rnaseq_pipeline
-dock_test_dir=$scripts/testing_docker
+dock_test_dir=$(dirname "$0")
+dock_test_dir=$(readlink -f $dock_test_dir)
+scripts=$(dirname $dock_test_dir)
+#dock_test_dir=$scripts/testing_docker
 #cd $dock_test_dir
-test_dir=~/lab_shared/scripts/vacc_rnaseq_pipeline/testing
+test_dir=${scripts}/testing
 #args2="-noSub"
-args3="--docker tap"
+args3="--docker jrboyd/tap -noSub"
 args="-i $test_dir/test_data -ref $(readlink -f ~/lab_shared/indexes/DM6)"
 
 #no config file

@@ -26,9 +26,10 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+#Defaults, will be overwritten with appropriate flags
 read_mode=SE
 sub_mode=sbatch
-no_model=
+no_model=""
 docker=""
 
 #parse args specified in config file by lines starting with #CFG
