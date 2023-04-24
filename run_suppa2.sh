@@ -4,8 +4,6 @@
 
 echo $0 $@
 
-
-
 SALMON_RESULT=$1
 GTF=$2
 SUPPA_REF=$3
@@ -26,20 +24,32 @@ if [ ! -f $raw ]; then echo supplied salmon quant directory, $SALMON_RESULT, is 
 echo $(basename $SALMON_RESULT ) > $tpm
 cut -f 1,4 $raw | awk 'NR > 1' >> $tpm
 
-# docker for suppa2 v1.0
-echo docker is $docker
-if [ -n "$docker" ]; then
+# docker for suppa2 v1.1
+container_type=""
+if [ -n "$docker" ]; then container_type="docker"; fi
+if [[ "$docker" == *.sif ]]; then container_type="singularity"; fi
+
+echo container_type is $container_type
+if [ -n "$container_type" ]; then
   dGTF=/input_gtf/$(basename $GTF)
   dSALMON_RESULT=/output_salmon
   dSUPPA_REF=/suppa_ref
 
-
+  if [ $container_type = "docker" ]; then
   base_cmd="docker run \
     -u $(id -u):$(id -g) \
     -v $(dirname $GTF):$(dirname $dGTF) \
     -v $SALMON_RESULT:$dSALMON_RESULT \
     -v $SUPPA_REF:$dSUPPA_REF \
     --entrypoint"
+  elif [ $container_type = "singularity" ]; then
+  base_cmd="singularity exec \
+    --bind $(dirname $GTF):$(dirname $dGTF),$SALMON_RESULT:$dSALMON_RESULT,$SUPPA_REF:$dSUPPA_REF \
+    $singularity"
+  else
+    echo "Unrecognized container_type $container_type";
+    exit 1;
+  fi
     
   cmd_suppa="$base_cmd suppa.py $docker"
 

@@ -25,6 +25,7 @@ while [[ "$#" -gt 0 ]]; do
         -wd|--workdir) wd="$2"; shift ;;
         -idx|--starindex) star_idx="$2"; shift ;;
         -docker|--docker) docker="$2"; shift ;;
+        -singularity|--singularity) singularity="$2"; shift;;
         -SE|--SE) mode=SE ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
@@ -82,9 +83,17 @@ fi
 
 echo STAR index is $star_idx
 
-# docker RNA v1.0
-echo docker is $docker
-if [ ! -z $docker ]; then
+# docker RNA v1.1
+echo docker is "$docker"
+echo singularity is "$singularity"
+if [ -n "$docker" ] && [ -n "$singularity" ]; then
+  echo Only 1 of docker or signularity should be set. Quit!
+  exit 1
+fi
+container_type=""
+if [ -n "$docker" ]; then container_type="docker"; fi
+if [ -n "$singularity" ]; then container_type="singularity"; fi
+if [ -n "$container_type" ]; then
   # Derive mount points for input files inside docker
   # Fastq files may be "," delim lists of fastqs. This requires special handling.
   F1=${F1//","/" "}
@@ -93,7 +102,7 @@ if [ ! -z $docker ]; then
   arr=($fastq_dir)
   num_uniq=${#arr[@]}
   if [ $num_uniq != 1 ]; then 
-    echo "For docker usage, all fastqs must be in the same directory! Found $num_uniq different directories. Quit!"
+    echo "For $container_type usage, all fastqs must be in the same directory! Found $num_uniq different directories. Quit!"
     exit 1;
   fi
   F1=${F1//" "/","}
@@ -104,19 +113,32 @@ if [ ! -z $docker ]; then
   dB=/output/$(basename $B)
   dstar_idx=/reference/$(basename $star_idx)
 
-  echo docker F1 is $dF1
-  echo docker F2 is $dF2
-  echo docker B is $dB
-  echo docker star_idx is $dstar_idx
-
+  echo $container_type F1 is $dF1
+  echo $container_type F2 is $dF2
+  echo $container_type B is $dB
+  echo $container_type star_idx is $dstar_idx
+  
+  dir_B=$(dirname "$B")
+  dir_dB=$(dirname "$dB")
+  if [ $container_type = "docker" ]; then
   cmd="docker run \
     -u $(id -u):$(id -g) \
-    -v $fastq_dir:/input \
-    -v $(dirname $B):$(dirname $dB) \
+    -v $fastq_dir:$dF \
+    -v $dir_B:$dir_dB \
     -v $star_idx:$dstar_idx \
     --entrypoint STAR\
     $docker \
     "
+  elif [ $container_type = "singularity" ]; then
+  cmd="singularity exec \
+    --bind $fastq_dir:$dF,$dir_B:$dir_dB,$star_idx:$dstar_idx \
+    $singularity \
+    STAR \
+    "
+  else
+    echo "Unrecognized container_type $container_type";
+    exit 1;
+  fi
 
   #update STAR command inputs to use docker paths
   F1=$dF1

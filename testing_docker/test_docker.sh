@@ -29,6 +29,7 @@ then
 echo singularity is not available
 else
 rm -r ${test_dir}/test_alignment.pool2
+singularity pull docker://jrboyd/tap 
 bash run_STAR.noSort.sh \
   -f1 "${test_dir}/test_data/test_dm6_1_R1_001.fastq.gz&${test_dir}/test_data/test_dm6_2_R1_001.fastq.gz" \
   -wd ${test_dir}/test_alignment.pool2 \
@@ -36,8 +37,7 @@ bash run_STAR.noSort.sh \
   -o pool_1and2.withSingularity \
   -f1s _R1_001.fastq.gz \
   -f2s _R2_001.fastq.gz \
-  --docker jrboyd/tap  \
-  --useSingularity
+  --singularity tap_latest.sif
 
 ls -lha ${test_dir}/test_alignment.pool2/pool_1and2.withSingularity*bam
 fi
