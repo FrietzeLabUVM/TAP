@@ -2,7 +2,7 @@
 
 Transcriptomic Analysis Pipeline
 
-ChIPseq processing is now also supported. Thought the [configuration file is more complicated](#chipseq-configuration-files).
+ChIPseq processing is now also supported. Though the [configuration file is more complicated](#chipseq-configuration-files).
 
 # Basic Usage
 
