@@ -7,8 +7,9 @@ SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 mode=SE
 sub_mode=sbatch
-no_model=
-docker=
+no_model=""
+docker=""
+singularity=""
 
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
@@ -33,6 +34,7 @@ while [[ "$#" -gt 0 ]]; do
         -noModel|--noModel) no_model="--noModel" ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
         -docker|--docker) docker="$2"; shift ;;
+        -singularity|--singularity) singularity="$2"; shift ;;
         -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPTS/help_msg.txt; exit 1 ;;
     esac
@@ -107,10 +109,21 @@ mkdir -p $log_path
 out_bam=${align_path}/${root}${suf_out_bam}
 sort_bam=${align_path}/${root}${suf_sort_bam}
 
-docker_arg=""
-if [ ! -z $docker ]; then
-  docker_arg="--docker $docker"
+#container, docker or singularity
+echo docker is "$docker"
+echo singularity is "$singularity"
+if [ -n "$docker" ] && [ -n "$singularity" ]; then
+  echo Only 1 of docker or signularity should be set. Quit!
+  exit 1
 fi
+container_arg=""
+if [ ! -z $docker ]; then
+  container_arg="--docker $docker"
+fi
+if [ ! -z $singularity ]; then
+  container_arg="--singularity $singularity"
+fi
+echo container_arg is $container_arg
 
 parse_jid () { #parses the job id from output of qsub
         #echo $1
@@ -148,7 +161,7 @@ se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
 align_sub_args="-J STAR_align"
 if [ $sub_mode = "bash" ]; then align_sub_args=""; fi
-align_qsub=$($qsub_cmd ${align_sub_args} $SCRIPTS/run_STAR.chip.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode $docker_arg)
+align_qsub=$($qsub_cmd ${align_sub_args} $SCRIPTS/run_STAR.chip.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
@@ -158,7 +171,7 @@ if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then
   mkdir -p $align_rDNA_path
   rDNA_sub_args="-J STAR_rDNA"
   if [ $sub_mode = "bash" ]; then rDNA_sub_args=""; fi
-  rdna_qsub=$($qsub_cmd ${rDNA_sub_args} $SCRIPTS/run_STAR.chip_rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $docker_arg)
+  rdna_qsub=$($qsub_cmd ${rDNA_sub_args} $SCRIPTS/run_STAR.chip_rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid
 else
@@ -169,16 +182,16 @@ fi
 #sort and index
 index_sub_args="-d afterok:$align_jid -J bsortindex"
 if [ $sub_mode = "bash" ]; then index_sub_args=""; fi
-index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam $docker_arg)")
+index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam $container_arg)")
 echo index_jid $index_jid
 
 #bigwigs
 bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 if [ $mode = SE ]; then
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $docker_arg)
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg)
 else
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $docker_arg)
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg)
 fi
 bw_jid=$(parse_jid "$bw_qsub")
 echo bw_jid $bw_jid
@@ -186,7 +199,7 @@ echo bw_jid $bw_jid
 #SNPs
 exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
-exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh -b $sort_bam -fa $fasta $docker_arg)")
+exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh -b $sort_bam -fa $fasta $container_arg)")
 
 echo exactSNP_jid $exact_jid
 
@@ -210,16 +223,10 @@ if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
   fi
   if [ $sub_mode = "bash" ]; then macs2_sub_args=""; fi
   echo macs2_cmd is $macs2_cmd
-  macs2_qsub=$($qsub_cmd $macs2_sub_args $macs2_cmd $docker_arg)
-  echo macs2_cmd $qsub_cmd $macs2_sub_args $macs2_cmd $docker_arg
+  macs2_qsub=$($qsub_cmd $macs2_sub_args $macs2_cmd $container_arg)
+  echo macs2_cmd $qsub_cmd $macs2_sub_args $macs2_cmd $container_arg
   macs2_jid=$(parse_jid "$macs2_qsub")
   echo macs2_jid $macs2_jid
-
-  #loose peak
-  #broad peak
-  #run_bdgcmp.sh
-  #run_bdg2bw.sh
-  #run_np2bb.sh
 fi
 
 complete_jid=$(parse_jid "$complete_qsub")

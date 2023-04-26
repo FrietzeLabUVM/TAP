@@ -8,6 +8,7 @@ SCRIPTS=$(dirname "$(readlink -f "$0")")
 mode=PE
 sub_mode=sbatch
 docker=""
+singularity=""
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -132,6 +133,7 @@ fi
 if [ ! -z $singularity ]; then
   container_arg="--singularity $singularity"
 fi
+echo container_arg is $container_arg
 
 parse_jid () { #parses the job id from output of qsub
         #echo $1

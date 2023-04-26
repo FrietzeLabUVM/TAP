@@ -37,7 +37,8 @@ while [[ "$#" -gt 0 ]]; do
 	      -s|--chrSizes) CHR_SIZES="$2"; shift ;;
         -noModel|--noModel) extra="--nomodel --extsize 147"; shift;;
         -no_bdg|--no_bdg) BDG="";;
-        -docker|--docker) docker="$2"; shift ;;
+        -docker|--docker) container="$2"; shift ;;
+        -singularity|--singularity) container="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -154,25 +155,42 @@ g=$(cat $CHR_SIZES | awk -v  total=0 '{total = total + $2}; END {print total}')
 
 OUT_DIR_local=$OUT_DIR
 
-# docker for macs2 v1.0
-echo docker is $docker
-if [ -n "$docker" ]; then
+# container for macs2 v1.1
+echo container is $container
+container_type=""
+if [ -n "$container" ]; then container_type="docker"; fi
+if [[ "$container" == *.sif ]]; then container_type="singularity"; fi
+echo container_type is $container_type
+
+if [ -n "$container" ]; then
   dTREAT_BAM=/input_treat_bam/$(basename $TREAT_BAM)
   dINPUT_BAM=/input_input_bam/$(basename $INPUT_BAM)
   dCHR_SIZES=/input_chr_sizes/$(basename $CHR_SIZES)
   dOUT_DIR=/output_bigwigs/$(basename $OUT_DIR)
 
-  base_cmd="docker run \
-    -u $(id -u):$(id -g) \
-    -v $(dirname $TREAT_BAM):$(dirname $dTREAT_BAM) \
-    -v $(dirname $INPUT_BAM):$(dirname $dINPUT_BAM) \
-    -v $(dirname $CHR_SIZES):$(dirname $dCHR_SIZES) \
-    -v $OUT_DIR:$dOUT_DIR \
-    --entrypoint"
-    
-  cmd_macs2="$base_cmd macs2 $docker"
-  cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $docker"
-  cmd_sortBed="$base_cmd sortBed $docker"
+  if [ $container_type = "docker" ]; then
+    base_cmd="docker run \
+      -u $(id -u):$(id -g) \
+      -v $(dirname $TREAT_BAM):$(dirname $dTREAT_BAM) \
+      -v $(dirname $INPUT_BAM):$(dirname $dINPUT_BAM) \
+      -v $(dirname $CHR_SIZES):$(dirname $dCHR_SIZES) \
+      -v $OUT_DIR:$dOUT_DIR \
+      --entrypoint"
+      
+    cmd_macs2="$base_cmd macs2 $container"
+    cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $container"
+    cmd_sortBed="$base_cmd sortBed $container"
+  elif [ $container_type = "singularity" ]; then
+    base_cmd="singularity exec \
+        --bind $(dirname $TREAT_BAM):$(dirname $dTREAT_BAM),$(dirname $INPUT_BAM):$(dirname $dINPUT_BAM),$(dirname $CHR_SIZES):$(dirname $dCHR_SIZES),$OUT_DIR:$dOUT_DIR"
+        
+    cmd_macs2="$base_cmd $container macs2"
+    cmd_bedGraphToBigWig="$base_cmd $container bedGraphToBigWig"
+    cmd_sortBed="$base_cmd $container sortBed"
+  else
+      echo "Unrecognized container_type $container_type";
+      exit 1;
+  fi
 
   TREAT_BAM=$dTREAT_BAM
   INPUT_BAM=$dINPUT_BAM

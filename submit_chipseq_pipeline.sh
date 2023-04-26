@@ -31,6 +31,7 @@ read_mode=SE
 sub_mode=sbatch
 no_model=""
 docker=""
+singularity=""
 
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
@@ -59,6 +60,7 @@ if [ ! -z $cfg ]; then
   -sl|--scriptLocation) scripts="$2"; shift ;;
   -noModel|--noModel) no_model="--noModel" ;;
   -docker|--docker) docker="$2"; shift ;;
+  -singularity|--singularity) singularity="$2"; shift ;;
 	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
@@ -87,6 +89,7 @@ while [[ "$#" -gt 0 ]]; do
         -sl|--scriptLocation) scripts="$2"; shift ;;
         -noModel|--noModel) no_model="--noModel" ;;
         -docker|--docker) docker="$2"; shift ;;
+        -singularity|--singularity) singularity="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
     esac
     shift
@@ -106,6 +109,11 @@ echo pipeline is $pipeline
 if [ -z $input ]; then echo input directory to find fastq in was never set, using current directory. use -i \(--inDir\) to specify.; input=$(pwd); fi;
 if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 1; fi;
 
+#only allow 1 container type
+if [ -n "$docker" ] && [ -n "$singularity" ]; then
+  echo Only 1 of docker or signularity should be set. Quit!
+  exit 1
+fi
 
 #build final command
 cmd=""
@@ -120,6 +128,7 @@ if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
 if [ ! -z $no_model ]; then cmd="$cmd --noModel"; fi
 if [ ! -z $docker ]; then cmd="$cmd --docker $docker"; fi
+if [ ! -z $singularity ]; then cmd="$cmd --singularity $singularity"; fi
 
 if [ -z $star_index ]; then star_index=$ref/STAR_INDEX; echo guessing star index as $star_index; fi
 if [ ! -d $star_index ]; then echo star_index $star_index not found!; exit 1; fi
