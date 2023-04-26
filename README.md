@@ -2,7 +2,7 @@
 
 Transcriptomic Analysis Pipeline
 
-A variation of this pipeline is [available for ChIPseq](https://github.com/FrietzeLabUVM/TAP/tree/chipseq)
+ChIPseq processing is now also supported. Though the [configuration file is more complicated](#chipseq-configuration-files).
 
 # Basic Usage
 
