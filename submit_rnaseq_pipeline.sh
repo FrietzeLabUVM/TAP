@@ -32,7 +32,6 @@ docker=""
 
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
-  dos2unix $cfg
   echo gathering parameters from config file $cfg
   args=$(cat $cfg | awk -v cfg_prefix="#CFG" -v ORS=" " '{if ($1 == cfg_prefix){$1 = ""; print $0}}')
   args="${args//\~/$HOME}"

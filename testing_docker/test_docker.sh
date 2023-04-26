@@ -54,6 +54,8 @@ bash run_suppa2.sh ${out_prefix}.salmon_quant ${index_dir}/GTF/current.gtf ${ind
 
 bash run_bam_sort_index.sh ${out_prefix}".Aligned.out.bam" $container_cmd
 
+bash run_exactSNP.all.sh -b ${out_prefix}".Aligned.out.bam" -fa ${index_dir}/FASTA/genome.fa  $container_cmd
+
 ls -lha ${out_prefix}*bam
 fi
 done
