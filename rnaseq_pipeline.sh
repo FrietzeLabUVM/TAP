@@ -28,6 +28,7 @@ while [[ "$#" -gt 0 ]]; do
         -noSub|--noSub) sub_mode=bash ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
         -docker|--docker) docker="$2"; shift ;;
+        -singularity|--singularity) singularity="$2"; shift ;;
         -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPTS/help_msg.txt; exit 1 ;;
     esac
@@ -117,9 +118,19 @@ sort_bam=${align_path}/${root}${suf_sort_bam}
 salmon_out=${align_path}/${root}${suf_salmon_quant}
 featr_out=${align_path}/${root}${suf_featr_count}
 
-docker_arg=""
+#container, docker or singularity
+echo docker is "$docker"
+echo singularity is "$singularity"
+if [ -n "$docker" ] && [ -n "$singularity" ]; then
+  echo Only 1 of docker or signularity should be set. Quit!
+  exit 1
+fi
+container_arg=""
 if [ ! -z $docker ]; then
-  docker_arg="--docker $docker"
+  container_arg="--docker $docker"
+fi
+if [ ! -z $singularity ]; then
+  container_arg="--singularity $singularity"
 fi
 
 parse_jid () { #parses the job id from output of qsub
@@ -158,7 +169,7 @@ se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
 align_sub_args="-J STAR_align"
 if [ $sub_mode = "bash" ]; then align_sub_args=""; fi
-align_qsub=$($qsub_cmd ${align_sub_args} $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode $docker_arg)
+align_qsub=$($qsub_cmd ${align_sub_args} $SCRIPTS/run_STAR.noSort.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
@@ -168,7 +179,7 @@ if [ -d $rDNA_index ] && [ ! -z $rDNA_index ] ; then
   mkdir -p $align_rDNA_path
   rDNA_sub_args="-J STAR_rDNA"
   if [ $sub_mode = "bash" ]; then rDNA_sub_args=""; fi
-  rdna_qsub=$($qsub_cmd ${rDNA_sub_args} $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $docker_arg)
+  rdna_qsub=$($qsub_cmd ${rDNA_sub_args} $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid
 else
@@ -179,25 +190,25 @@ fi
 #tx quant
 salmon_sub_args="-d afterok:$align_jid -J salmon_quant"
 if [ $sub_mode = "bash" ]; then salmon_sub_args=""; fi
-salmon_jid=$(parse_jid "$($qsub_cmd $salmon_sub_args $SCRIPTS/run_salmon_quant.sh $tx_bam $tx $docker_arg)")
+salmon_jid=$(parse_jid "$($qsub_cmd $salmon_sub_args $SCRIPTS/run_salmon_quant.sh $tx_bam $tx $container_arg)")
 echo salmon_jid $salmon_jid
 suppa2_sub_args="-d afterok:$salmon_jid -J suppa2"
 if [ $sub_mode = "bash" ]; then suppa2_sub_args=""; fi
-suppa2_jid=$(parse_jid "$($qsub_cmd $suppa2_sub_args $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref $docker_arg)")
+suppa2_jid=$(parse_jid "$($qsub_cmd $suppa2_sub_args $SCRIPTS/run_suppa2.sh $salmon_out $gtf $suppa_ref $container_arg)")
 echo suppa2_jid $suppa2_jid
 #sort and index
 index_sub_args="-d afterok:$align_jid -J bsortindex"
 if [ $sub_mode = "bash" ]; then index_sub_args=""; fi
-index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam $docker_arg)")
+index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam $container_arg)")
 echo index_jid $index_jid
 
 #bigwigs
 bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 if [ $mode = SE ]; then
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $docker_arg)
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg)
 else
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $docker_arg)
+  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg)
 fi
 bw_jid=$(parse_jid "$bw_qsub")
 echo bw_jid $bw_jid
@@ -205,7 +216,7 @@ echo bw_jid $bw_jid
 #SNPs
 exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
-exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh -b $sort_bam -fa $fasta $docker_arg)")
+exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh -b $sort_bam -fa $fasta $container_arg)")
 
 echo exactSNP_jid $exact_jid
 

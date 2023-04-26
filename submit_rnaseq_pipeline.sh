@@ -29,6 +29,7 @@ done
 read_mode=PE
 sub_mode=sbatch
 docker=""
+singularity=""
 
 #parse args specified in config file by lines starting with #CFG
 if [ ! -z $cfg ]; then
@@ -50,12 +51,13 @@ if [ ! -z $cfg ]; then
 	-s|--suppaRef) suppa_ref="$2"; shift ;;
 	-g|--gtf) gtf="$2"; shift ;;
 	-fa|--fasta) fasta="$2"; shift ;;
-        -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
-        -SE|--SE) read_mode=SE ;;
-        -noSub|--noSub) sub_mode=bash ;;
-        -p|--pipeline) pipeline="$2"; shift ;;
-        -sl|--scriptLocation) scripts="$2"; shift ;;
+  -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
+  -SE|--SE) read_mode=SE ;;
+  -noSub|--noSub) sub_mode=bash ;;
+  -p|--pipeline) pipeline="$2"; shift ;;
+  -sl|--scriptLocation) scripts="$2"; shift ;;
   -docker|--docker) docker="$2"; shift ;;
+  -singularity|--singularity) singularity="$2"; shift ;;
 	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
@@ -83,6 +85,7 @@ while [[ "$#" -gt 0 ]]; do
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
         -docker|--docker) docker="$2"; shift ;;
+        -singularity|--singularity) singularity="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
     esac
     shift
@@ -100,6 +103,11 @@ echo pipeline is $pipeline
 if [ -z $input ]; then echo input directory to find fastq in was never set, using current directory. use -i \(--inDir\) to specify.; input=$(pwd); fi;
 if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 1; fi;
 
+#only allow 1 container type
+if [ -n "$docker" ] && [ -n "$singularity" ]; then
+  echo Only 1 of docker or signularity should be set. Quit!
+  exit 1
+fi
 
 #build final command
 cmd=""
@@ -115,6 +123,7 @@ if [ ! -z $fasta ]; then cmd="$cmd --fasta $fasta"; fi
 if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
 if [ ! -z $docker ]; then cmd="$cmd --docker $docker"; fi
+if [ ! -z $singularity ]; then cmd="$cmd --singularity $singularity"; fi
 
 if [ $read_mode = SE ]; then cmd="$cmd -SE"; fi
 if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi 
