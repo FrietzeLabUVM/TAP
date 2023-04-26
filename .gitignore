@@ -5,3 +5,4 @@ testing_docker/test_alignment.*
 references
 subout.txt
 slurm*out
+tap_latest.sif

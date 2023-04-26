@@ -13,7 +13,7 @@ echo $0 $@
 
 BAM=$1
 GTF=$2
-docker=$4
+container=$4
 
 if [ -z $BAM ]; then echo need bam as arg1, quit.; exit 1; fi
 if [ ! -f $BAM ]; then echo can not find bam $BAM, quit.; exit 1; fi
@@ -27,22 +27,36 @@ fi
 
 mkdir -p $OUT
 
-# docker for salmon v1.0
-echo docker is $docker
-if [ -n "$docker" ]; then
+# container for suppa2 v1.1
+echo container is $container
+container_type=""
+if [ -n "$container" ]; then container_type="docker"; fi
+if [[ "$container" == *.sif ]]; then container_type="singularity"; fi
+
+echo container_type is $container_type
+
+if [ -n "$container_type" ]; then
   dBAM=/input_bam/$(basename $BAM)
   dGTF=/input_gtf/$(basename $GTF)
   dOUT=/output_salmon
 
-  base_cmd="docker run \
-    -u $(id -u):$(id -g) \
-    -v $(dirname $BAM):$(dirname $dBAM) \
-    -v $(dirname $GTF):$(dirname $dGTF) \
-    -v $OUT:$dOUT \
-    --entrypoint"
-    
-  cmd_salmon="$base_cmd salmon $docker"
-
+  if [ $container_type = "docker" ]; then
+    cmd_salmon="docker run \
+      -u $(id -u):$(id -g) \
+      -v $(dirname $BAM):$(dirname $dBAM) \
+      -v $(dirname $GTF):$(dirname $dGTF) \
+      -v $OUT:$dOUT \
+      --entrypoint \
+      salmon $container"  
+  elif [ $container_type = "singularity" ]; then
+    cmd_salmon="singularity exec \
+      --bind $(dirname $BAM):$(dirname $dBAM),$(dirname $GTF):$(dirname $dGTF),$OUT:$dOUT \
+      $singularity \
+      $container salmon"
+  else
+      echo "Unrecognized container_type $container_type";
+      exit 1;
+  fi
   BAM=$dBAM
   GTF=$dGTF
   OUT=$dOUT

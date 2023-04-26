@@ -19,7 +19,7 @@ echo $0 $@
 #ldd -r $(which samtools)
 
 BAM=$1
-docker=$3
+container=$3
 
 if [ -z $BAM ]; then echo bam file expected as arg1, quit.; exit 1; fi
 echo BAM is $BAM
@@ -33,30 +33,42 @@ if [ -f ${OUT_BAM}.bai ]; then rm ${OUT_BAM}.bai; fi
 TMP_DIR=~/tmp
 mkdir -p $TMP_DIR
 
-# docker for samtools and UCSC tools v1.0
-echo docker is \"$docker\"
-if [ -n "$docker" ]; then
-  #derive docker paths
+# container for suppa2 v1.1
+echo container is $container
+container_type=""
+if [ -n "$container" ]; then container_type="docker"; fi
+if [[ "$container" == *.sif ]]; then container_type="singularity"; fi
+
+echo container_type is $container_type
+
+if [ -n "$container_type" ]; then
+  #derive container paths
   dBAM=/input_bam/$(basename $BAM)
   dOUT_BAM=/output_bam/$(basename $OUT_BAM)
   dTMP_DIR=/user_tmp
 
-  echo docker BAM is $dBAM
-  echo docker OUT_BAM is $dOUT_BAM
-  echo docker TMP_DIR is $dTMP_DIR
+  echo $container_type BAM is $dBAM
+  echo $container_type OUT_BAM is $dOUT_BAM
+  echo $container_type TMP_DIR is $dTMP_DIR
 
-  #docker command prefix
-  base_cmd="docker run \
-    -u $(id -u):$(id -g) \
-    -v $(dirname $BAM):$(dirname $dBAM) \
-    -v $(dirname $OUT_BAM):$(dirname $dOUT_BAM) \
-    -v $TMP_DIR:$dTMP_DIR \
-    --entrypoint"
-    
-  #final docker command paths
-  cmd_samtools="$base_cmd samtools $docker"
+  if [ $container_type = "docker" ]; then
+    cmd_samtools="docker run \
+      -u $(id -u):$(id -g) \
+      -v $(dirname $BAM):$(dirname $dBAM) \
+      -v $(dirname $OUT_BAM):$(dirname $dOUT_BAM) \
+      -v $TMP_DIR:$dTMP_DIR \
+      --entrypoint \
+      samtools $container"
+  elif [ $container_type = "singularity" ]; then
+    cmd_samtools="singularity exec \
+      --bind $(dirname $BAM):$(dirname $dBAM),$(dirname $OUT_BAM):$(dirname $dOUT_BAM),$TMP_DIR:$dTMP_DIR \
+      $container samtools"
+  else
+      echo "Unrecognized container_type $container_type";
+      exit 1;
+  fi
 
-  #overwrite with docker paths
+  #overwrite with container paths
   BAM=$dBAM
   OUT_BAM=$dOUT_BAM
   TMP_DIR=$dTMP_DIR
