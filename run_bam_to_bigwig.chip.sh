@@ -11,7 +11,8 @@ while [[ "$#" -gt 0 ]]; do
         -s|--chrSizes) CHR_SIZES="$2"; shift ;;
         -o|--outDir) OUT_DIR="$2"; shift ;;
         -pe|--pe) libType=PE ;;
-        -docker|--docker) docker="$2"; shift ;;
+        -docker|--docker) container="$2"; shift ;;
+        -singularity|--singularity) container="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -53,25 +54,41 @@ mkdir -p $tmpdir
 
 OUT_DIR_local=$OUT_DIR
 
-# docker for samtools and UCSC tools v1.0
-echo docker is \"$docker\"
-if [ -n "$docker" ]; then
+echo container is $container
+container_type=""
+if [ -n "$container" ]; then container_type="docker"; fi
+if [[ "$container" == *.sif ]]; then container_type="singularity"; fi
+echo container_type is $container_type
+
+if [ -n "$container" ]; then
   dBAM=/input_bam/$(basename $BAM)
   dCHR_SIZES=/input_chr_sizes/$(basename $CHR_SIZES)
   dOUT_DIR=/output_bigwigs/$(basename $OUT_DIR)
 
-  base_cmd="docker run \
-    -u $(id -u):$(id -g) \
-    -v $(dirname $BAM):$(dirname $dBAM) \
-    -v $(dirname $CHR_SIZES):$(dirname $dCHR_SIZES) \
-    -v $(dirname $OUT_DIR):$(dirname $dOUT_DIR) \
-    --entrypoint"
-    
-  cmd_samtools="$base_cmd samtools $docker"
-  cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $docker"
-  cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $docker"
-  cmd_sortBed="$base_cmd sortBed $docker"
-
+  if [ $container_type = "docker" ]; then
+    base_cmd="docker run \
+      -u $(id -u):$(id -g) \
+      -v $(dirname $BAM):$(dirname $dBAM) \
+      -v $(dirname $CHR_SIZES):$(dirname $dCHR_SIZES) \
+      -v $(dirname $OUT_DIR):$(dirname $dOUT_DIR) \
+      --entrypoint"
+  
+    cmd_samtools="$base_cmd samtools $container"
+    cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $container"
+    cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $container"
+    cmd_sortBed="$base_cmd sortBed $container"
+  elif [ $container_type = "singularity" ]; then
+    base_cmd="singularity exec \
+        --bind $(dirname $BAM):$(dirname $dBAM),$(dirname $CHR_SIZES):$(dirname $dCHR_SIZES),$(dirname $OUT_DIR):$(dirname $dOUT_DIR)"
+        
+    cmd_samtools="$base_cmd $container samtools"
+    cmd_genomeCoverageBed="$base_cmd $container genomeCoverageBed"
+    cmd_bedGraphToBigWig="$base_cmd $container bedGraphToBigWig"
+    cmd_sortBed="$base_cmd $container sortBed"
+  else
+      echo "Unrecognized container_type $container_type";
+      exit 1;
+  fi
   BAM=$dBAM
   CHR_SIZES=$dCHR_SIZES
   OUT_DIR=$dOUT_DIR
