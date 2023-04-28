@@ -30,6 +30,7 @@ while [[ "$#" -gt 0 ]]; do
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -PE|--PE) mode=PE ;;
+	      -SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -noModel|--noModel) no_model="--noModel" ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
@@ -215,7 +216,7 @@ complete_qsub=$($qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${al
 $qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model"
+  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model $container_arg"
   if [ -z $input_jid ]; then #no input job dependency
     macs2_sub_args="-d afterok:$index_jid -J macs2"
   else #has input job dependency
