@@ -52,6 +52,7 @@ if [ ! -z $cfg ]; then
 	-g|--gtf) gtf="$2"; shift ;;
 	-fa|--fasta) fasta="$2"; shift ;;
   -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
+  -PE|--PE) read_mode=PE ;;
   -SE|--SE) read_mode=SE ;;
   -noSub|--noSub) sub_mode=bash ;;
   -p|--pipeline) pipeline="$2"; shift ;;
@@ -80,6 +81,7 @@ while [[ "$#" -gt 0 ]]; do
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
+	-PE|--PE) read_mode=PE ;;
         -SE|--SE) read_mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;

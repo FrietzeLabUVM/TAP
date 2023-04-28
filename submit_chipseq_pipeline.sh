@@ -55,6 +55,7 @@ if [ ! -z $cfg ]; then
 	-fa|--fasta) fasta="$2"; shift ;;
   -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
   -PE|--PE) read_mode=PE ;;
+  -SE|--SE) mode=SE ;;
   -noSub|--noSub) sub_mode=bash ;;
   -p|--pipeline) pipeline="$2"; shift ;;
   -sl|--scriptLocation) scripts="$2"; shift ;;
@@ -84,6 +85,7 @@ while [[ "$#" -gt 0 ]]; do
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -PE|--PE) read_mode=PE ;;
+	-SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
         -sl|--scriptLocation) scripts="$2"; shift ;;
@@ -298,9 +300,15 @@ for f_line in $todo; do
   f1=$ff1
   
   echo input_name  : ${input_name}
-  echo input_jid   : ${input_pool2pool_jids[${input_name}]}
+  input_jid=${input_pool2pool_jids[${input_name}]}
+  echo input_jid   : ${input_jid}
+  if [ -n "$input_jid" ]; then
+    input_jid_arg="-input_jid ${input_jid}"
+  else
+    input_jid_arg=""
+  fi
 
-  cmd_chip_rep="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} -input_jid ${input_pool2pool_jids[${input_name}]} $cmd"
+  cmd_chip_rep="bash $pipeline -f1 ${f1//" "/&} --outPrefix $rep_name -input_bam ${align_path}/${input_name}${suf_sort_bam} ${input_jid_arg} $cmd"
   echo cmd_chip_rep is : $cmd_chip_rep
   chip_rep_pipeout=$($cmd_chip_rep)
   
@@ -376,9 +384,16 @@ for samp in "${!chip_pool2pool_jids[@]}"; do
   echo chip    : $chip_jid---$chip_bam
   echo vs
   echo input   : $input_jid---$input_bam
-  echo pooled_cmd is bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd
 
-  chip_pool_pipeout=$(bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam -input_jid $input_jid $cmd)
+    if [ -n "$input_jid" ]; then
+    input_jid_arg="-input_jid ${input_jid}"
+  else
+    input_jid_arg=""
+  fi
+
+  echo pooled_cmd is bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam ${input_jid_arg} $cmd
+
+  chip_pool_pipeout=$(bash $pipeline2 -chip_bam $chip_bam -chip_jid $chip_jid -input_bam $input_bam  ${input_jid_arg} $cmd)
   macs2_jid=$(parse_jid_by_name "$chip_pool_pipeout" macs2_jid)
   echo pool macs2_jid $macs2_jid
 
