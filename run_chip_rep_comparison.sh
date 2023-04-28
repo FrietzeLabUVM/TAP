@@ -24,6 +24,8 @@ fi
 
 PIPELINE_PATH=$6
 
+container=$8
+
 SCRIPT_DIR=${PIPELINE_PATH}/idr_package
 
 if [ ! -d $SCRIPT_DIR ]; then
