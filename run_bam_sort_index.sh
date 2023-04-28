@@ -33,6 +33,9 @@ if [ -f ${OUT_BAM}.bai ]; then rm ${OUT_BAM}.bai; fi
 TMP_DIR=~/tmp
 mkdir -p $TMP_DIR
 
+lOUT_BAM=$OUT_BAM
+lBAM=$BAM
+
 # container for suppa2 v1.1
 echo container is $container
 container_type=""
@@ -79,6 +82,6 @@ fi
 $cmd_samtools sort -T $TMP_DIR -o $OUT_BAM $BAM
 $cmd_samtools index $OUT_BAM
 
-if [ -f ${OUT_BAM}.bai ]; then rm $BAM; fi
-echo $OUT_BAM
+if [ -f ${lOUT_BAM}.bai ]; then rm $lBAM; fi
+echo $lOUT_BAM
 
