@@ -25,6 +25,7 @@ while [[ "$#" -gt 0 ]]; do
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
+	      -PE|--PE) mode=PE ;;
         -SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
