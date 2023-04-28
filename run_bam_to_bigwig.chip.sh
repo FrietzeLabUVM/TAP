@@ -40,7 +40,7 @@ if [ ! -f $CHR_SIZES ]; then
   echo add CHR_SIZES= in qsub or supply as second arg
   exit 1
 fi
-W
+
 mkdir -p $OUT_DIR
 OUT_DIR=$(readlink -f $OUT_DIR)
 echo output directory is $OUT_DIR
