@@ -1,7 +1,5 @@
 #!/bin/bash
-
 #SLURM pipeline for RNAseq
-#only runs the rDNA part
 
 export PATH=/gpfs2/pi-sfrietze/bin:$PATH
 
@@ -9,6 +7,8 @@ SCRIPTS=$(dirname "$(readlink -f "$0")")
 
 mode=PE
 sub_mode=sbatch
+docker=""
+singularity=""
 # umask 077 # rw permission for user only
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -28,6 +28,8 @@ while [[ "$#" -gt 0 ]]; do
         -SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
+        -docker|--docker) docker="$2"; shift ;;
+        -singularity|--singularity) singularity="$2"; shift ;;
         -h|--help) cat $SCRIPTS/help_msg.txt; exit 0; shift ;;
         *) echo "Unknown parameter passed: $1"; cat $SCRIPTS/help_msg.txt; exit 1 ;;
     esac
@@ -93,7 +95,9 @@ if [ ! -f $fasta ]; then echo fasta $fasta not found! exit; exit 1; fi
 if [ -z $tx ]; then tx=$(readlink -m -f $ref/FASTA/transcriptome.fa); echo guessing transcriptome fasta as $tx; fi
 if [ ! -f $tx ]; then echo transcriptome fasta $tx not found! exit; exit 1; fi
 if [ -z $rDNA_index ]; then 
-  rDNA_index=$(readlink -m -f ${ref}.rDNA/STAR_INDEX); echo guess rDNA star index as $rDNA_index; 
+  if [ -d ${ref}.rDNA/STAR_INDEX ]; then
+    rDNA_index=$(readlink -m -f ${ref}.rDNA/STAR_INDEX); echo guessing rDNA star index as $rDNA_index; 
+  fi
 else
   #rDNA star index must exist if specified instead of guessed
   if [ ! -d $rDNA_index ]; then echo Specified rDNA star index $rDNA_index was not found! quit; fi
@@ -114,6 +118,22 @@ tx_bam=${align_path}/${root}${suf_tx_bam}
 sort_bam=${align_path}/${root}${suf_sort_bam}
 salmon_out=${align_path}/${root}${suf_salmon_quant}
 featr_out=${align_path}/${root}${suf_featr_count}
+
+#container, docker or singularity
+echo docker is "$docker"
+echo singularity is "$singularity"
+if [ -n "$docker" ] && [ -n "$singularity" ]; then
+  echo Only 1 of docker or signularity should be set. Quit!
+  exit 1
+fi
+container_arg=""
+if [ ! -z $docker ]; then
+  container_arg="--docker $docker"
+fi
+if [ ! -z $singularity ]; then
+  container_arg="--singularity $singularity"
+fi
+echo container_arg is $container_arg
 
 parse_jid () { #parses the job id from output of qsub
         #echo $1
@@ -141,17 +161,29 @@ else
   echo no completion file found, starting run for ${align_path}/${root}
 fi
 
+date > ${align_path}/${root}.start
+
+$qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
+
 #align script
 F1=${F1//" "/"&"}
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
 
 #rDNA alignment
-if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then
-  rdna_qsub=$($qsub_cmd $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode)
+if [ -d $rDNA_index ] && [ ! -z $rDNA_index ] ; then
+  align_rDNA_path=${align_path}/rDNA
+  mkdir -p $align_rDNA_path
+  rDNA_sub_args="-J STAR_rDNA"
+  if [ $sub_mode = "bash" ]; then rDNA_sub_args=""; fi
+  rdna_qsub=$($qsub_cmd ${rDNA_sub_args} $SCRIPTS/run_STAR.rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid
 else
   echo rDNA index was not set so no rDNA alignment will be performed.  
   echo Create rDNA index at ${ref}.rDNA/STAR_INDEX to enable this optional feature.
 fi
+
+$qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root}
+$qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
+
