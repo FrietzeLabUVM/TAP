@@ -485,9 +485,9 @@ if [ ! -z "${!diff2rep_bam[@]}" ]; then #check if any diff groups set
     #pool_names=$(echo $pool_names | awk -v FS="," -v OFS="\n" '{$1=$1; print $0}' | sort | uniq | awk -v ORS="," '{$1=$1; print $0}') | sed 's/,$//'
     echo rep_bams $rep_bams
     #echo unique pool_names $pool_names
-    log_path=${align_path}/diff_${diff_group}.logs
-    mkdir -p $log_path
-    sbatch $dep -J diff -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_differential.sh $pool_names $rep_bams $peaks
+    #log_path=${align_path}/diff_${diff_group}.logs
+    #mkdir -p $log_path
+    #sbatch $dep -J diff -o $log_path/%x.%j.out -e $log_path/%x.%j.error --export=PATH=$PATH ${scripts}/run_chip_differential.sh $pool_names $rep_bams $peaks
 #    bash ${scripts}/run_chip_differential.sh
   done
 fi
