@@ -95,3 +95,18 @@ RUN wget -N https://sourceforge.net/projects/subread/files/subread-2.0.3/subread
   make -f Makefile.Linux && \
   cd ../bin/ && \
   mv * /usr/local/bin/
+
+## pigz
+RUN wget http://zlib.net/pigz/pigz-2.7.tar.gz && \
+  tar -xf pigz-2.7.tar.gz && \
+  cd pigz-2.7 && \
+  make && \
+  mv pigz /usr/local/bin/ && \
+  mv unpigz /usr/local/bin/ && \
+  cd .. && \
+  rm -r pigz-2.7
+
+RUN wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz && \
+  tar -xf sratoolkit.current-ubuntu64.tar.gz && \
+  mv sratoolkit.3.0.1-ubuntu64/bin/* /usr/local/bin/ && \
+  rm -r sratoolkit.3.0.1-ubuntu64
