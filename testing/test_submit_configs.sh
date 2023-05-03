@@ -2,7 +2,7 @@ scripts=~/lab_shared/scripts/vacc_rnaseq_pipeline
 cd $scripts
 test_dir=~/lab_shared/scripts/vacc_rnaseq_pipeline/testing
 #args2="-noSub"
-args="-i $test_dir/test_data -ref $(readlink -f ~/lab_shared/indexes/DM6)"
+args="-i $test_dir/test_data/fastq_rnaseq_PE -ref $(readlink -f ~/lab_shared/indexes/DM6)"
 
 #no config file
 bash $scripts/submit_rnaseq_pipeline.sh -o $test_dir/test_alignment.no_config $args $args2

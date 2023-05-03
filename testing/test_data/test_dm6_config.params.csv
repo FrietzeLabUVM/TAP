@@ -1,6 +1,0 @@
-#CFG -ref ~/lab_shared/indexes/DM6 -o testing/test_alignment.params
-#regular comment, not used
-#CFG -i testing/test_data
-test_dm6_1_R1_001.fastq.gz
-test_dm6_2_R1_001.fastq.gz
-test_dm6_3_R1_001.fastq.gz
