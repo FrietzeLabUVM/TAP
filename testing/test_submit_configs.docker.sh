@@ -11,17 +11,17 @@ args3="--singularity tap_latest.sif -noSub"
 args="-i $test_dir/test_data/fastq_rnaseq_PE -ref $(readlink -f ~/lab_shared/indexes/DM6)"
 
 #no config file
-bash $scripts/submit_rnaseq_pipeline.sh -o $dock_test_dir/test_alignment.no_config -SE $args $args2 ${args3}
+bash $scripts/submit_rnaseq_pipeline.sh -o $dock_test_dir/test_outputs/test_alignment.no_config -SE $args $args2 ${args3}
 
 
 #config that just runs sample 2
-bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.basic.csv -o $dock_test_dir/test_alignment.basic $args $args2 ${args3}
+bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.basic.csv -o $dock_test_dir/test_outputs/test_alignment.basic $args $args2 ${args3}
 
 #config that renames samples
-bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.rename.csv -o $dock_test_dir/test_alignment.rename $args $args2 ${args3}
+bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.rename.csv -o $dock_test_dir/test_outputs/test_alignment.rename $args $args2 ${args3}
 
 #config that pools sample 1 and 2, leaves 3 alone, then pools all using & and " "
-bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.pool.csv -o $dock_test_dir/test_alignment.pool $args $args2 ${args3}
+bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.pool.csv -o $dock_test_dir/test_outputs/test_alignment.pool $args $args2 ${args3}
 
 #config that controls all params, config is only argument
 bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.params.csv $args2 ${args3}
