@@ -21,7 +21,7 @@ if [ -f $pooled ]; then
 elif [ ${#topool[@]} -eq 1 ]; then
         echo pooling not necessary, just link for $bams to $pooled
         bams=$(readlink -f $bams)
-        cmd="ln -s $bams $pooled"
+        cmd="ln -s $(basename $bams) $pooled"
 else
         echo gonna pool $bams into $pooled
         cmd="samtools merge $pooled $bams"
