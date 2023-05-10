@@ -106,9 +106,12 @@ RUN wget http://zlib.net/pigz/pigz-2.7.tar.gz && \
   cd .. && \
   rm -r pigz-2.7
 
-RUN chown -R root:root /*
+## permissions and cleanup
+RUN chown -R root:root salmon-1.9.0_linux_x86_64 && \
+  chown -R root:root subread-2.0.3-source && \
+  rm *tar*
 
-RUN wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz && \
-  tar -xf sratoolkit.current-ubuntu64.tar.gz && \
-  mv sratoolkit.3.0.1-ubuntu64/bin/* /usr/local/bin/ && \
-  rm -r sratoolkit.3.0.1-ubuntu64
+RUN wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/3.0.5/sratoolkit.3.0.5-ubuntu64.tar.gz && \
+  tar -xf sratoolkit.3.0.5-ubuntu64.tar.gz && \
+  mv sratoolkit.3.0.5-ubuntu64/bin/* /usr/local/bin/ && \
+  rm -r sratoolkit.3.0.5-ubuntu64
