@@ -87,7 +87,7 @@ if [ -n "$container" ]; then
     cmd_samtools="$base_cmd samtools $container"
     cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $container"
     cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $container"
-    cmd_sortBed="$base_cmd sortBed $container"
+    cmd_sortBed="$base_cmd sort-bed $container"
   elif [ $container_type = "singularity" ]; then
     base_cmd="singularity exec \
         --bind $(dirname $BAM):$(dirname $dBAM),$(dirname $CHR_SIZES):$(dirname $dCHR_SIZES),$(dirname $OUT_DIR):$(dirname $dOUT_DIR)"
@@ -95,7 +95,7 @@ if [ -n "$container" ]; then
     cmd_samtools="$base_cmd $container samtools"
     cmd_genomeCoverageBed="$base_cmd $container genomeCoverageBed"
     cmd_bedGraphToBigWig="$base_cmd $container bedGraphToBigWig"
-    cmd_sortBed="$base_cmd $container sortBed"
+    cmd_sortBed="$base_cmd $container sort-bed"
   else
       echo "Unrecognized container_type $container_type";
       exit 1;
@@ -108,7 +108,7 @@ else
   cmd_samtools=samtools
   cmd_genomeCoverageBed=genomeCoverageBed
   cmd_bedGraphToBigWig=bedGraphToBigWig
-  cmd_sortBed=sortBed
+  cmd_sortBed=sort-bed
 fi
 
 #for PE need to filter for read 1
@@ -172,12 +172,12 @@ for splice in show hide; do
     echo skip $BDG_local, delete to rerun; 
   else 
     cmd1="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM" 
-    cmd2="$cmd_sortBed -i $BDG"
+    cmd2="$cmd_sortBed --max-mem 19G $BDG"
     echo running: 
     echo $cmd1 to $BDG_local
     $cmd1 > $BDG_local
     echo $cmd2 to $BDG_local
-    # sortBed seems to be incapable of overwriting source file, need to go to tmp intermediate
+    # sort-bed seems to be incapable of overwriting source file, need to go to tmp intermediate
     $cmd2 > ${BDG_local}.tmp
     mv ${BDG_local}.tmp $BDG_local
     #$cmd_sortBed -i $BDG > $BDG; 

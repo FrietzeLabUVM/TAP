@@ -76,7 +76,7 @@ if [ -n "$container" ]; then
     cmd_samtools="$base_cmd samtools $container"
     cmd_genomeCoverageBed="$base_cmd genomeCoverageBed $container"
     cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $container"
-    cmd_sortBed="$base_cmd sortBed $container"
+    cmd_sortBed="$base_cmd sort-bed $container"
   elif [ $container_type = "singularity" ]; then
     base_cmd="singularity exec \
         --bind $(dirname $BAM):$(dirname $dBAM),$(dirname $CHR_SIZES):$(dirname $dCHR_SIZES),$(dirname $OUT_DIR):$(dirname $dOUT_DIR)"
@@ -84,7 +84,7 @@ if [ -n "$container" ]; then
     cmd_samtools="$base_cmd $container samtools"
     cmd_genomeCoverageBed="$base_cmd $container genomeCoverageBed"
     cmd_bedGraphToBigWig="$base_cmd $container bedGraphToBigWig"
-    cmd_sortBed="$base_cmd $container sortBed"
+    cmd_sortBed="$base_cmd $container sort-bed"
   else
       echo "Unrecognized container_type $container_type";
       exit 1;
@@ -96,13 +96,13 @@ else
   cmd_samtools=samtools
   cmd_genomeCoverageBed=genomeCoverageBed
   cmd_bedGraphToBigWig=bedGraphToBigWig
-  cmd_sortBed=sortBed
+  cmd_sortBed=sort-bed
 fi
 
 echo "samtools command is: $cmd_samtools"
 echo "genomeCoverageBed command is: $cmd_genomeCoverageBed"
 echo "bedGraphToBigWig command is: $cmd_bedGraphToBigWig"
-echo "sortBed command is: $cmd_sortBed"
+echo "sort-bed command is: $cmd_sortBed"
 
 #for PE need to filter for read 1
 if [ libType = PE ]; then
@@ -160,7 +160,7 @@ for splice in hide; do
     cmd="$cmd_genomeCoverageBed -bg $splice_arg $scale_arg $strand_arg -ibam $BAM"
     echo $cmd to $BDG_local
     $cmd > $BDG_local
-    cmd_sort="$cmd_sortBed -i $BDG"
+    cmd_sort="$cmd_sortBed --max-mem 19G $BDG"
     echo $cmd_sort to $BDG_local
     $cmd_sort > ${BDG_local}.tmp
     mv ${BDG_local}.tmp $BDG_local

@@ -180,14 +180,14 @@ if [ -n "$container" ]; then
       
     cmd_macs2="$base_cmd macs2 $container"
     cmd_bedGraphToBigWig="$base_cmd bedGraphToBigWig $container"
-    cmd_sortBed="$base_cmd sortBed $container"
+    cmd_sortBed="$base_cmd sort-bed $container"
   elif [ $container_type = "singularity" ]; then
     base_cmd="singularity exec \
         --bind $(dirname $TREAT_BAM):$(dirname $dTREAT_BAM),$(dirname $INPUT_BAM):$(dirname $dINPUT_BAM),$(dirname $CHR_SIZES):$(dirname $dCHR_SIZES),$OUT_DIR:$dOUT_DIR"
         
     cmd_macs2="$base_cmd $container macs2"
     cmd_bedGraphToBigWig="$base_cmd $container bedGraphToBigWig"
-    cmd_sortBed="$base_cmd $container sortBed"
+    cmd_sortBed="$base_cmd $container sort-bed"
   else
       echo "Unrecognized container_type $container_type";
       exit 1;
@@ -200,7 +200,7 @@ if [ -n "$container" ]; then
 else
   cmd_macs2=macs2
   cmd_bedGraphToBigWig=bedGraphToBigWig
-  cmd_sortBed=sortBed
+  cmd_sortBed=sort-bed
 fi
 
 #narrow tight
@@ -268,7 +268,7 @@ if [ $BDG = "--bdg" ]; then
     echo run_bdgcmp is:
     echo $run_bdgcmp
 		$run_bdgcmp
-    run_sortBed="$cmd_sortBed -i $CMP_BDG"
+    run_sortBed="$cmd_sortBed --max-mem 19G $CMP_BDG"
     echo run_sortBed is:
     echo $run_sortBed to $CMP_BDG_local
     $run_sortBed > ${CMP_BDG_local}.tmp
