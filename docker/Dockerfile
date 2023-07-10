@@ -113,3 +113,13 @@ RUN wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/3.0.5/sratoolkit.3.0.5-ubunt
   mv sratoolkit.3.0.5-ubuntu64/bin/* /usr/local/bin/ && \
   rm -r sratoolkit.3.0.5-ubuntu64 && \
   rm sratoolkit.3.0.5-ubuntu64.tar.gz
+
+## bedops, provides RAM limited alternative to bedSort
+RUN mkdir bedops  && \
+  cd bedops  && \
+  wget https://github.com/bedops/bedops/releases/download/v2.4.41/bedops_linux_x86_64-v2.4.41.tar.bz2 && \
+  tar -xf bedops_linux_x86_64-v2.4.41.tar.bz2 && \
+  cp bin/sort-bed /usr/local/bin/ && \
+  cp bin/sort-bed-typical /usr/local/bin/ && \
+  cd .. && \
+  rm -r bedops
