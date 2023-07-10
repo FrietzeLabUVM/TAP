@@ -6,6 +6,9 @@ index_dir=~/lab_shared/indexes/DM6
 #cd $dock_test_dir
 test_dir=${scripts}/testing
 
+test_fq="${test_dir}/test_data/fastq_rnaseq_PE/test_dm6_1_R1_001.fastq.gz&${test_dir}/test_data/fastq_rnaseq_PE/test_dm6_2_R1_001.fastq.gz"
+echo $test_fq
+
 rm -r ${test_dir}/test_alignment.pool2
 
 for container_type in docker singularity native; do
@@ -35,7 +38,7 @@ then
 echo $container_type is not available
 else
 bash run_STAR.noSort.sh \
-  -f1 "${test_dir}/test_data/test_dm6_1_R1_001.fastq.gz&${test_dir}/test_data/test_dm6_2_R1_001.fastq.gz" \
+  -f1 "${test_fq}" \
   -wd ${test_dir}/test_alignment.pool2 \
   -idx ${index_dir}/STAR_INDEX \
   -o $out \
@@ -68,7 +71,7 @@ echo docker is not available
 else
 #rm -r ${test_dir}/test_alignment.pool2
 bash run_STAR.noSort.sh \
-  -f1 "${test_dir}/test_data/test_dm6_1_R1_001.fastq.gz&${test_dir}/test_data/test_dm6_2_R1_001.fastq.gz" \
+  -f1 "${test_fq}" \
   -wd ${test_dir}/test_alignment.pool2 \
   -idx ~/lab_shared/indexes/DM6/STAR_INDEX \
   -o pool_1and2.withDocker \
@@ -87,7 +90,7 @@ else
 #rm -r ${test_dir}/test_alignment.pool2
 singularity pull docker://jrboyd/tap 
 bash run_STAR.noSort.sh \
-  -f1 "${test_dir}/test_data/test_dm6_1_R1_001.fastq.gz&${test_dir}/test_data/test_dm6_2_R1_001.fastq.gz" \
+  -f1 "${test_fq}" \
   -wd ${test_dir}/test_alignment.pool2 \
   -idx ~/lab_shared/indexes/DM6/STAR_INDEX \
   -o pool_1and2.withSingularity \
@@ -104,7 +107,7 @@ then
 echo STAR is not available
 else
 bash run_STAR.noSort.sh \
-  -f1 "${test_dir}/test_data/test_dm6_1_R1_001.fastq.gz&${test_dir}/test_data/test_dm6_2_R1_001.fastq.gz" \
+  -f1 "${test_fq}" \
   -wd ${test_dir}/test_alignment.pool2 \
   -idx ~/lab_shared/indexes/DM6/STAR_INDEX \
   -o pool_1and2.noDocker \
