@@ -30,7 +30,7 @@ while [[ "$#" -gt 0 ]]; do
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
         -PE|--PE) mode=PE ;;
-	      -SE|--SE) mode=SE ;;
+        -SE|--SE) mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -noModel|--noModel) no_model="--noModel" ;;
         -sl|--scriptLocation) SCRIPTS="$2"; shift ;;
