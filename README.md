@@ -76,15 +76,15 @@ The other 3 lines specify R1 fastq files to use as input and the final output pr
 
 If you have multiple sequencing fastqs for a single sample, include all the fastqs on a single line separated by `&`.  For example a line pooling 3 samples would be `fq1.gz&fq2.gz&fq3.gz,sample1`.
 
-If this had been paired-end data the R2 files would be guessed.  See details for --f1_suffix and --f2_suffix for details and limitations.
+Only R1 files should be specfied. If this had been paired-end data the R2 files would be derived be substituting the R2 suffix with the R1 suffix.  See parameters [--f1_suffix and --f2_suffix](#optional) for details and limitations.
 
 ### ChIPseq configuration files
 
-Processing ChIPseq data is more complicated RNAseq files as it requires knowing how to pool replicates and how each samples pairs up to a control or input sample.
+Processing ChIPseq data is more complicated than RNAseq as it requires knowing how to pool replicates and how each sample pairs up to a control or input sample.
 
-Unlike RNAseq, the second column of prefixes is required and an additional 2 columns specifc to ChIPseq are also required: the pooled ChIP prefixes and pooled input prefixes.
+Unlike RNAseq, the second column of prefixes is required and an additional 2 columns specific to ChIPseq are also required: the pooled ChIP prefixes and pooled input prefixes.
 
-The body of a ChIPseq confiugration file could look like this:
+The body of a ChIPseq configuration file could look like this:
 
     #1) fastq file, 2) unique sample prefix, 3) pooled sample prefix, 4) pooled input prefix to compare to
     fq1a.gz&fq1b.gz,MCF7_ATAD2B_rep1,MCF7_ATAD2B_pooled,MCF7_input_pooled
@@ -96,23 +96,25 @@ Note how the input samples have identical entries for the pooled sample prefix a
 
 This file would result in 3 sets of peak calls: ATAD2B rep1 vs pooled input, ATAD2B rep2 vs pooled input, and ATAD2B pooled vs pooled input
 
+Input/control samples must have the same content in columns 3 and 4.
+
 ## Run the pipeline
 
-With our PATH setup and configuration file created, you are ready to run.
+With your dependecies available, references generated, and configuration file created, you are ready to run.
 
-The pipeline submission script is `/gpfs2/pi-sfrietze/scripts/vacc_rnaseq_pipeline/submit_rnaseq_pipeline.sh`
+The pipeline submission script is `submit_rnaseq_pipeline.sh`
 
-The ChIPseq submission script is `/gpfs2/pi-sfrietze/scripts/vacc_chipseq_pipeline/submit_chipseq_pipeline.sh`
+The ChIPseq submission script is `submit_chipseq_pipeline.sh`
 
 Running is simple now:
 
-`bash /gpfs2/pi-sfrietze/scripts/vacc_rnaseq_pipeline/submit_rnaseq_pipeline.sh -c YOUR_CONFIG.csv`
+`bash submit_rnaseq_pipeline.sh -c YOUR_CONFIG.csv`
 
 The pipeline submits several SLURM jobs for every sample specified.
 
 It's a good idea to check on your submission periodically.  This command will show your current jobs `squeue -u $(basename ~)`.  If you have jobs showing up in the NODELIST(REASON) column with (DependencyNeverSatisfied), something has gone wrong.  You'll need to `scancel` those jobs and go through the logs in the output folder to figure out what has gone wrong.
 
-Files will appear in the output location as jobs finish.  When all jobs for a sample finish successfully, a \*.complete file gets written.  This \*.complete file will prevent the pipeline from running again for that same sample.  Therefore you can add files to the same configuration file later and resubmit without wasting time reprocessing the same data again.  Or resubmit in case some samples processing OK and other do not.  If you do want to replace a sample, for example if you have done more sequencing or made an error, you will have to manually delete this \*.complete file.
+Files will appear in the output location as jobs finish.  When all jobs for a sample finish successfully, a \*.complete file gets written.  This \*.complete file will prevent the pipeline from running again for that same sample.  Therefore you can add fastq files to the same configuration file later and resubmit without wasting time reprocessing the same data again.  Or resubmit in case some samples processing OK and other do not.  If you do want to replace a sample, for example if you have done more sequencing or made an error, you will have to manually delete this \*.complete file and all other impacted outputs.
 
 # Parameters
 
@@ -145,7 +147,7 @@ To build your own reference, you will need a FASTA file and a correpsponding gen
 
 ## Optional
 -f1s, --f1_suffix
-: <_R1_001.fastq.gz> The suffix used for R1 fastq files.  This suffix will be replaced with the R2 suffix to guess R2 fastq files.  If no final file prefix is supplied, removal of the R1 suffix generates the final file prefix.
+: <_R1_001.fastq.gz> The suffix used for R1 fastq files.  This suffix will be replaced with the R2 suffix to guess R2 fastq files.  If no final file prefix is supplied in column 2, removal of the R1 suffix generates the final file prefix.
 
 -f2s, --f2_suffix
 : <_R2_001.fastq.gz> The suffix used for R2 fastq files.  Will replace the R1 suffix when guessing R2 files.
@@ -159,5 +161,17 @@ To build your own reference, you will need a FASTA file and a correpsponding gen
 -SE, --SE
 : If activated, alignment will be in single-end mode instead of the RNA-seq default of paired-end.  For ChIP-seq, -SE is the default.
 
+-PE, --PE
+: If activated, alignment will be in paried-end mode, already the default for RNA-seq.  For ChIP-seq, -SE is the default.
+
 -noSub, --noSub
 : If activated, bash will be used to run all pipeline steps in serial instead of sbatch to run in parallel via the job scheduler.  For debugging only or if SLURM's sbatch is not available.
+
+-noModel, --noModel
+: Only used for ChIP-seq data. Disables shifting model. Only implemented to all testing with tiny fastq files that are too small for learning the shifting model.
+
+-docker, --docker
+: Name of an installed docker image. Likely jrboyd/tap. Docker will provide all dependencies. `docker` itself still needs to be on your PATH.
+
+-singularity, --singularity
+: Path to a singularity .sif file. Likely named tap_latest.sif. Singularity will provide all dependencies. `singularity` itself still needs to be on your PATH.
