@@ -10,10 +10,6 @@ ChIPseq processing is now also supported. Though the [configuration file is more
 
 These instructions are for people who are running the RNA-seq and ChIP-seq pipelines "as is" and have no need to modify them. The ChIP-seq pipeline is an elaboration on the RNA-seq pipeline and intructions here generally apply to both.  Please read the ChIP-seq specific section for what is different and additional instructions.
 
-It may also be helpful to consult Sophie and Alyssa's tips document [here](https://docs.google.com/document/d/1t8kc3DhJnxHebRJB4b6FNDKfz_HYsP8HyzlB_1A_5I0/view "Useful tips").
-
-Cong has similarly added notes on running the ChIPseq pipeline [here](https://github.com/FrietzeLabUVM/vacc_rnaseq_pipeline/blob/main/VACC_ChIP-Seq.md)
-
 ## Dependencies
 
 The easiest way to handle all dependencies is via either [Docker](https://www.docker.com/) or [Singularity](https://docs.sylabs.io/guides/3.0/user-guide/installation.html). With either of these approaches you can even run this pipeline on Windows or Mac.
@@ -44,6 +40,8 @@ And also similar to Docker, you need to let TAP know you're using Singularity by
 
 ### Conventional Installation
 
+See the included script for an outline of installing all dependencies: `setup_scripts/manual_install_dependencies.sh`. You will need to elevate to sudo privleges for some of these installation steps as written. It's certainly possible, without sudo, to install all dependencies on any system where you're already able to run other bioinformatics software. I've done it. You'll need to make adjustments as necessary.
+
 The PATH variable controls where Linux searches for programs when you try to run them. Check it with ```echo $PATH```.  
 
 If you happen to be a user of the VACC HPC at UVM, the Frietze lab maintains a directory with all executables needed to run this pipeline: ```/gpfs2/pi-sfrietze/bin```.
@@ -58,13 +56,13 @@ Alternatively you could run `PATH=/gpfs2/pi-sfrietze/bin:$PATH` every time befor
 
 ## Create a configuration file
 
-The configuration file controls all parameters used to run the pipeline.  An example config file is at `/gpfs2/pi-sfrietze/scripts/vacc_rnaseq_pipeline/configs/AI_RNAseq_config.csv`.
+The configuration file can potentially control all parameters used to run the pipeline.  An example config file is [here](https://github.com/FrietzeLabUVM/TAP/blob/main/testing/test_configs/test_dm6_config.params.csv)`. You may also supply all pipeline parameters when calling the submit script. If you have parameters defined in the config and in the script call, parameters in the script call will overwrite duplicated parameters in the config file.
 
 Configuration files are comma delimited and can contain comment lines starting with `#` and special comments starting with `#CFG` that supply parameters to the pipeline.  It is possible and recommended that you run the pipeline solely using parameters supplied by configuration files and preserve the configs as a record.
 
 Here's an example config:
 
-    #CFG -i /gpfs2/pi-sfrietze/data/AI_RNAseq -o /gpfs2/pi-sfrietze/data/AI_RNAseq_processed -ref /gpfs2/pi-sfrietze/references/MM10 -SE
+    #CFG -i AI_RNAseq_fastqs -o AI_RNAseq_processed -ref ~/references/MM10 -SE
     #comments like this aren't interpeted as configuration
     31-wt-t0_S93_L006_R1_001.fastq.gz,WT_U0_R1
     sfrietze_spring16_20160413_mouse_76_R1.fastq.gz,WT_U0_R2
@@ -72,7 +70,7 @@ Here's an example config:
 
 The #CFG supplies the input location (-i) output destination (-o) and genome reference (-ref) as well as specifying the data is single end (-SE).
 
--i, -o, and -ref are always necessary to run the pipeline.  There are additional optional parameters, like -SE in this example that are documented in detail later.
+-i, -o, and -ref are always necessary to run the pipeline.  There are additional optional parameters, like -SE in this example that are [documented in detail later](#parameters).
 
 The other 3 lines specify R1 fastq files to use as input and the final output prefix.  The prefix is actually optional but highly recommended to generate "pretty" file names that are easier to use downstream. Easy to use filenames use underscores to separate descriptive variables - with all files specifying the same number of variables in the same order.
 
