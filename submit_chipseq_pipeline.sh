@@ -100,10 +100,11 @@ done
 #apply fallback defaults
 if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
-if [ -z $pipeline ]; then pipeline=${SCRIPT_PATH}/chipseq_pipeline.sh; fi
-if [ -z $pipeline2 ]; then pipeline2=${SCRIPT_PATH}/chipseq_pipeline.pooled.sh; fi
 if [ -z $scripts ]; then scripts=${SCRIPT_PATH}; fi
-if [ -z $align_path ]; then align_path=$(pwd); fi
+if [ -z $pipeline ]; then pipeline=${scripts}/chipseq_pipeline.sh; fi
+if [ -z $pipeline2 ]; then pipeline2=${scripts}/chipseq_pipeline.pooled.sh; fi
+
+if [ -z $align_path ]; then echo output directory was never set, creating TAP_output in current directory.; align_path=$(pwd)/TAP_output; fi
 
 echo pipeline is $pipeline
 

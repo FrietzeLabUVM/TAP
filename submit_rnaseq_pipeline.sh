@@ -96,10 +96,12 @@ done
 #apply fallback defaults
 if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
-if [ -z $pipeline ]; then pipeline=${SCRIPT_PATH}/rnaseq_pipeline.sh; fi
 if [ -z $scripts ]; then scripts=${SCRIPT_PATH}; fi
+if [ -z $pipeline ]; then pipeline=${scripts}/rnaseq_pipeline.sh; fi
 
 echo pipeline is $pipeline
+
+if [ -z $align_path ]; then echo output directory was never set, creating TAP_output in current directory.; align_path=$(pwd)/TAP_output; fi
 
 #check validity, must have input and (ref or all of idx,s,g,fa)
 if [ -z $input ]; then echo input directory to find fastq in was never set, using current directory. use -i \(--inDir\) to specify.; input=$(pwd); fi;
