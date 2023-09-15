@@ -1,6 +1,6 @@
 # TAP 
 
-![schematic of TAP pipeline steps.](https://github.com/FrietzeLabUVM/TAP/TAP_Figure_1.png?raw=true)
+![schematic of TAP pipeline steps.](https://github.com/FrietzeLabUVM/TAP/blob/main/TAP_Figure_1.png?raw=true)
 
 Transcriptomic Analysis Pipeline
 
