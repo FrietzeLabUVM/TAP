@@ -1,5 +1,5 @@
 # the following should work on ubuntu 20.04, from fresh install
-# this is based on the docker build file
+# this is based on the docker build file, many of these commands require sudo privileges
 apt-get update
 
 ## needed to install git without prompts
