@@ -1,5 +1,7 @@
 # TAP 
 
+![schematic of TAP pipeline steps.](https://github.com/FrietzeLabUVM/TAP/TAP_Figure_1.png?raw=true)
+
 Transcriptomic Analysis Pipeline
 
 ChIPseq processing is now also supported. Though the [configuration file is more complicated](#chipseq-configuration-files).
