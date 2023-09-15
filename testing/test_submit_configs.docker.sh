@@ -7,7 +7,7 @@ scripts=$(dirname $dock_test_dir)
 test_dir=${scripts}/testing
 #args2="-noSub"
 args3="--docker jrboyd/tap -noSub"
-args3="--singularity tap_latest.sif -noSub"
+args3="--singularity $(readlink -f $dock_test_dir/../tap_latest.sif) -noSub"
 args="-i $test_dir/test_data/fastq_rnaseq_PE -ref $(readlink -f ~/lab_shared/indexes/DM6)"
 
 #no config file
