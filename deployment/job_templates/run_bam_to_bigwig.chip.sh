@@ -1,7 +1,4 @@
 #!/bin/bash
-#SBATCH --mem=10000
-#SBATCH -o bigwig_%j.out                 # File to which STDOUT will be written, including job ID
-#SBATCH -e bigwig_%j.err                 # File to which STDERR will be written, including job ID
 
 libType=SE
 

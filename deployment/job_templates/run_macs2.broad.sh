@@ -1,7 +1,4 @@
 #!/bin/bash
-#$ -o macs2."$JOB_ID".out
-#$ -e macs2."$JOB_ID".error
-
 
 echo TREAT_BAM is $TREAT_BAM
 echo INPUT_BAM is $INPUT_BAM

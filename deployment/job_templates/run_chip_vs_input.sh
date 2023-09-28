@@ -1,16 +1,7 @@
 #!/bin/bash
-#SBATCH --nodes=1                               # Request one core
-#SBATCH --ntasks-per-node=1                               # Request one node (if you request more than one core with -n, also using
-#SBATCH --cpus-per-task=1                                           # -N 1 means all cores will be on the same node)
-#SBATCH -t 1-06:00                         # Runtime in D-HH:MM format
-#SBATCH -p bluemoon                           # Partition to run in
-#SBATCH --mem=20000                        # Memory total in MB (for all cores)
-
 
 ### runs MACS2 (tight, loose, and broad) generates FE bigwigs
-
 BDG="--bdg"
-no_model=
 extra=""
 read_mode=SE
 

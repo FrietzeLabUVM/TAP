@@ -1,7 +1,4 @@
 #!/usr/bin/bash
-#$ -o np2bb."$JOB_ID".out
-#$ -e np2bb."$JOB_ID".error
-
 
 #required inputs:
 if [ -z $inputNarrowPeak ]

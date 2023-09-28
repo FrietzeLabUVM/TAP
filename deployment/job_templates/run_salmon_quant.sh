@@ -1,8 +1,4 @@
 #!/bin/bash
-#SBATCH --cpus-per-task=4                                           # -N 1 means all cores will be on the same node)
-#SBATCH -t 0-12:00                         # Runtime in D-HH:MM format
-#SBATCH -p bluemoon                           # Partition to run in
-#SBATCH --mem=8000   
 
 echo $0 $@
 
@@ -59,5 +55,10 @@ else
   cmd_salmon=salmon
 fi
 
+#$CPUS should be replaced in deployment script but fallback to 1 regardless
+runThreadN=$CPUS
+if [ -z "$runThreadN" ]; then runThreadN=1; fi
+
 #if [ -d $OUT ]; then echo output $OUT already exists, will not rerun.; exit 0; fi
-$cmd_salmon quant -p 2 -t $GTF -l A -a $BAM -o $OUT --gencode
+cmd="$cmd_salmon quant -p $runThreadN -t $GTF -l A -a $BAM -o $OUT --gencode"
+$cmd

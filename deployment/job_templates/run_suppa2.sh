@@ -1,6 +1,4 @@
 #!/bin/bash
-#$ -N suppa2
-#py=/slipstream/home/dbgap/anaconda3/bin/python3
 
 echo $0 $@
 

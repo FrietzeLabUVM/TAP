@@ -1,6 +1,5 @@
 #!/bin/bash
-#$ -cwd
-#$ -N exactSNP
+
 echo $0 $@
 
 while [[ "$#" -gt 0 ]]; do

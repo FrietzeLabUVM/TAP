@@ -1,6 +1,5 @@
 #!/bin/bash
-#$ -o macs2."$JOB_ID".out
-#$ -e macs2."$JOB_ID".error
+
 BDG="--bdg"
 while [[ "$#" -gt 0 ]]; do
     case $1 in

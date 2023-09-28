@@ -1,6 +1,4 @@
 #!/bin/bash
-#$ -o idr."$JOB_ID".out
-#$ -e idr."$JOB_ID".error
 
 POOLNAME=$1
 
