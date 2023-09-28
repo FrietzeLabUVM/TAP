@@ -1,0 +1,34 @@
+#CFG --job_headers job_headers
+#CFG --job_templates job_templates
+#CFG --deployment_target ../deployed_job_scripts
+#
+#template_script,job_name,header,processors
+run_STAR.noSort.sh,NAME,normal_job_header.txt,1
+run_STAR.rDNA.sh,NAME,normal_job_header.txt,1
+run_STAR.chip_rDNA.sh,NAME,normal_job_header.txt,1
+run_STAR.chip.sh,NAME,normal_job_header.txt,1
+#
+run_bam_sort_index.sh,NAME,normal_job_header.txt,1
+#
+run_chip_vs_input.sh,NAME,normal_job_header.txt,1
+run_pool_bams.sh,NAME,normal_job_header.txt,1
+#
+run_macs2.sh,NAME,normal_job_header.txt,1
+run_macs2.broad.sh,NAME,normal_job_header.txt,1
+run_np2bb.sh,NAME,normal_job_header.txt,1
+#
+run_salmon_quant.sh,NAME,normal_job_header.txt,1
+run_suppa2.sh,NAME,normal_job_header.txt,1
+#
+run_exactSNP.all.sh,NAME,normal_job_header.txt,1
+#
+run_bam_to_bigwig.chip.sh,NAME,normal_job_header.txt,1
+run_bam_to_bigwig.sh,NAME,normal_job_header.txt,1
+#
+run_chip_rep_comparison.sh,NAME,normal_job_header.txt,1
+run_chip_differential.sh,NAME,normal_job_header.txt,1
+#
+echo_submission.sh,submission,short_job_header.txt,1
+write_completion.sh,completion,short_job_header.txt,1
+write_finish.sh,finish,short_job_header.txt,1
+#

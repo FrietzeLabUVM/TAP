@@ -41,25 +41,25 @@ if [ ! -z $cfg ]; then
     set -- $args
     while [[ "$#" -gt 0 ]]; do
       case $1 in
-	-c|--config) echo ignoring config file specified in config file.; shift ;;
-	-f1s|--f1_suffix) F1_suff="$2"; shift ;;
-	-f2s|--f2_suffix) F2_suff="$2"; shift ;;
-	-i|--inDir) input="$2"; shift ;;
-	-o|--outDir) align_path="$2"; shift ;;
-	-ref|--reference) ref="$2"; shift ;;
-	-idx|--starIndex) star_index="$2"; shift ;;
-	-s|--suppaRef) suppa_ref="$2"; shift ;;
-	-g|--gtf) gtf="$2"; shift ;;
-	-fa|--fasta) fasta="$2"; shift ;;
-  -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
-  -PE|--PE) read_mode=PE ;;
-  -SE|--SE) read_mode=SE ;;
-  -noSub|--noSub) sub_mode=bash ;;
-  -p|--pipeline) pipeline="$2"; shift ;;
-  -sl|--scriptLocation) scripts="$2"; shift ;;
-  -docker|--docker) docker="$2"; shift ;;
-  -singularity|--singularity) singularity="$2"; shift ;;
-	*) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
+        -c|--config) echo ignoring config file specified in config file.; shift ;;
+        -f1s|--f1_suffix) F1_suff="$2"; shift ;;
+        -f2s|--f2_suffix) F2_suff="$2"; shift ;;
+        -i|--inDir) input="$2"; shift ;;
+        -o|--outDir) align_path="$2"; shift ;;
+        -ref|--reference) ref="$2"; shift ;;
+        -idx|--starIndex) star_index="$2"; shift ;;
+        -s|--suppaRef) suppa_ref="$2"; shift ;;
+        -g|--gtf) gtf="$2"; shift ;;
+        -fa|--fasta) fasta="$2"; shift ;;
+        -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
+        -PE|--PE) read_mode=PE ;;
+        -SE|--SE) read_mode=SE ;;
+        -noSub|--noSub) sub_mode=bash ;;
+        -p|--pipeline) pipeline="$2"; shift ;;
+        -sl|--scriptLocation) scripts="$2"; shift ;;
+        -docker|--docker) docker="$2"; shift ;;
+        -singularity|--singularity) singularity="$2"; shift ;;
+        *) echo "Unknown parameter passed: $1"; cat $SCRIPT_PATH/help_msg.txt; exit 1 ;;
       esac
       shift
     done
@@ -81,7 +81,7 @@ while [[ "$#" -gt 0 ]]; do
         -g|--gtf) gtf="$2"; shift ;;
         -fa|--fasta) fasta="$2"; shift ;;
         -rDNA|--rDNA_starIndex) rDNA_index="$2"; shift ;;
-	-PE|--PE) read_mode=PE ;;
+	      -PE|--PE) read_mode=PE ;; 
         -SE|--SE) read_mode=SE ;;
         -noSub|--noSub) sub_mode=bash ;;
         -p|--pipeline) pipeline="$2"; shift ;;
