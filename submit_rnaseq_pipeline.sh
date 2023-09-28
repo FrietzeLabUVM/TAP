@@ -46,6 +46,7 @@ if [ ! -z $cfg ]; then
         -f2s|--f2_suffix) F2_suff="$2"; shift ;;
         -i|--inDir) input="$2"; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
+        -j|--jobDir|--jobsDir) JOBS_PATH="$2"; shift ;;
         -ref|--reference) ref="$2"; shift ;;
         -idx|--starIndex) star_index="$2"; shift ;;
         -s|--suppaRef) suppa_ref="$2"; shift ;;
@@ -75,6 +76,7 @@ while [[ "$#" -gt 0 ]]; do
         -f2s|--f2_suffix) F2_suff="$2"; shift ;;
         -i|--inDir) input="$2"; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
+        -j|--jobDir|--jobsDir) JOBS_PATH="$2"; shift ;;
         -ref|--reference) ref="$2"; shift ;;
         -idx|--starIndex) star_index="$2"; shift ;;
         -s|--suppaRef) suppa_ref="$2"; shift ;;
@@ -98,6 +100,7 @@ if [ -z $F1_suff ]; then F1_suff=_R1_001.fastq.gz; fi
 if [ -z $F2_suff ]; then F2_suff=_R2_001.fastq.gz; fi
 if [ -z $scripts ]; then scripts=${SCRIPT_PATH}; fi
 if [ -z $pipeline ]; then pipeline=${scripts}/rnaseq_pipeline.sh; fi
+if [ -z $JOBS_PATH ]; then JOBS_PATH=${scripts}/deployed_job_scripts; fi
 
 echo pipeline is $pipeline
 
@@ -106,6 +109,7 @@ if [ -z $align_path ]; then echo output directory was never set, creating TAP_ou
 #check validity, must have input and (ref or all of idx,s,g,fa)
 if [ -z $input ]; then echo input directory to find fastq in was never set, using current directory. use -i \(--inDir\) to specify.; input=$(pwd); fi;
 if [ ! -d $input ]; then echo cannot find input directory ${input}. quit!; exit 1; fi;
+if [ ! -d $JOBS_PATH ]; then echo cannot find jobs scripts directory ${JOBS_PATH}. quit!; exit 1; fi;
 
 #only allow 1 container type
 if [ -n "$docker" ] && [ -n "$singularity" ]; then
@@ -128,6 +132,7 @@ if [ ! -z $rDNA_index ]; then cmd="$cmd --rDNA_starIndex $rDNA_index"; fi
 if [ ! -z $scripts ]; then cmd="$cmd --scriptLocation $scripts"; fi
 if [ ! -z $docker ]; then cmd="$cmd --docker $docker"; fi
 if [ ! -z $singularity ]; then cmd="$cmd --singularity $singularity"; fi
+if [ ! -z $JOBS_PATH ]; then cmd="$cmd --jobDir $JOBS_PATH"; fi
 
 if [ $read_mode = SE ]; then cmd="$cmd -SE"; fi
 if [ $sub_mode = bash ]; then cmd="$cmd -noSub"; fi 

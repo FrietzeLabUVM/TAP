@@ -20,6 +20,7 @@ while [[ "$#" -gt 0 ]]; do
         -input_jid|--input_jid) input_jid="$2"; shift ;;
         -p|--outPrefix) root="$2"; echo root is $root; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
+        -j|--jobDir|--jobsDir) JOBS_PATH="$2"; shift ;;
         -ref|--reference) ref=$2; shift ;;
         -idx|--starIndex) star_index="$2"; shift ;;
         -s|--suppaRef) suppa_ref="$2"; shift ;; 
@@ -43,6 +44,8 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ ! -d $SCRIPTS ]; then echo could not find script directory $SCRIPTS, quit!; exit 1; fi
+if [ ! -d $JOBS_PATH ]; then echo could not find job script directory $JOBS_PATH, quit!; exit 1; fi
+
 if [ -z $sort_bam ]; then echo need chip_bam as -chip_bam! quit; exit 1; fi
 if [ -z $sort_jid ]; then echo need chip_jid as -chip_jid! quit; exit 1; fi
 if [ -z $input_bam ]; then echo need input_bam as -input_bam! quit; exit 1; fi
@@ -127,15 +130,15 @@ fi
 
 date > ${align_path}/${root}.start
 
-$qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
+$qsub_cmd $JOBS_PATH/echo_submission.sh $0 $#
 
 #bigwigs
 bw_sub_args="-d afterok:$sort_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 if [ $mode = SE ]; then
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg)
+  bw_qsub=$($qsub_cmd $bw_sub_args $JOBS_PATH/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg)
 else
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg)
+  bw_qsub=$($qsub_cmd $bw_sub_args $JOBS_PATH/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg)
 fi
 bw_jid=$(parse_jid "$bw_qsub")
 echo bw_jid $bw_jid
@@ -143,12 +146,12 @@ echo bw_jid $bw_jid
 #SNPs
 exactSNP_sub_args="-d afterok:$sort_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
-exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh -b $sort_bam -fa $fasta $container_arg)")
+exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $JOBS_PATH/run_exactSNP.all.sh -b $sort_bam -fa $fasta $container_arg)")
 
 echo exactSNP_jid $exact_jid
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam  -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model"
+  macs2_cmd="$JOBS_PATH/run_chip_vs_input.sh -t $sort_bam -i $input_bam  -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model"
   if [ -z "$sort_jid$input_jid" ]; then
     macs2_sub_args="-J macs2"
   elif [ -z $input_jid ]; then #no input job dependency
@@ -173,8 +176,8 @@ else
   completion_sub_args="-d afterok:$exact_jid:$bw_jid:$macs2_jid -J completion"
 fi
 if [ $sub_mode = "bash" ]; then completion_sub_args=""; finish_sub_args=""; fi
-complete_qsub=$($qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root})
-$qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
+complete_qsub=$($qsub_cmd $completion_sub_args $JOBS_PATH/write_completion.sh ${align_path}/${root})
+$qsub_cmd $finish_sub_args $JOBS_PATH/write_finish.sh ${align_path}/${root}
 
 complete_jid=$(parse_jid "$complete_qsub")
 echo complete_jid $complete_jid

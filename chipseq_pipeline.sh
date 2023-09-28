@@ -23,6 +23,7 @@ while [[ "$#" -gt 0 ]]; do
         -i|--inDir) in_path="$2"; shift ;;
         -p|--outPrefix) root="$2"; echo root is $root; shift ;;
         -o|--outDir) align_path="$2"; shift ;;
+        -j|--jobDir|--jobsDir) JOBS_PATH="$2"; shift ;;
         -ref|--reference) ref=$2; shift ;;
         -idx|--starIndex) star_index="$2"; shift ;;
         -s|--suppaRef) suppa_ref="$2"; shift ;; 
@@ -43,6 +44,8 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ ! -d $SCRIPTS ]; then echo could not find script directory $SCRIPTS, quit!; exit 1; fi
+if [ ! -d $JOBS_PATH ]; then echo could not find job script directory $JOBS_PATH, quit!; exit 1; fi
+
 if [ -z $F1 ]; then echo need fastq1 as -f1! quit; exit 1; fi
 #if [ -z $input_bam ]; then echo need input_bam as -input_bam! quit; exit 1; fi
 #if [ -z $input_jid ]; then echo need input_jid as -input_jid! quit; exit 1; fi
@@ -154,7 +157,7 @@ fi
 
 date > ${align_path}/${root}.start
 
-$qsub_cmd $SCRIPTS/echo_submission.sh $0 $#
+$qsub_cmd $JOBS_PATH/echo_submission.sh $0 $#
 
 #align script
 F1=${F1//" "/"&"}
@@ -162,7 +165,7 @@ se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
 align_sub_args="-J STAR_align"
 if [ $sub_mode = "bash" ]; then align_sub_args=""; fi
-align_qsub=$($qsub_cmd ${align_sub_args} $SCRIPTS/run_STAR.chip.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
+align_qsub=$($qsub_cmd ${align_sub_args} $JOBS_PATH/run_STAR.chip.sh -f1 $F1 -wd $align_path -idx $star_index -o $root -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
 align_jid=$(parse_jid "$align_qsub")
 echo align_jid $align_jid
 
@@ -172,7 +175,7 @@ if [ -d $rDNA_index ] && [ ! -z $$rDNA_index ] ; then
   mkdir -p $align_rDNA_path
   rDNA_sub_args="-J STAR_rDNA"
   if [ $sub_mode = "bash" ]; then rDNA_sub_args=""; fi
-  rdna_qsub=$($qsub_cmd ${rDNA_sub_args} $SCRIPTS/run_STAR.chip_rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
+  rdna_qsub=$($qsub_cmd ${rDNA_sub_args} $JOBS_PATH/run_STAR.chip_rDNA.sh -f1 $F1 -wd $align_rDNA_path -idx $rDNA_index -o ${root}.rDNA -f1s $F1_suff -f2s $F2_suff $se_mode $container_arg)
   rdna_jid=$(parse_jid "$rdna_qsub")
   echo rdna_jid $rdna_jid
 else
@@ -183,18 +186,18 @@ fi
 #sort and index
 index_sub_args="-d afterok:$align_jid -J bsortindex"
 if [ $sub_mode = "bash" ]; then index_sub_args=""; fi
-index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $SCRIPTS/run_bam_sort_index.sh $out_bam $container_arg)")
+index_jid=$(parse_jid "$($qsub_cmd $index_sub_args $JOBS_PATH/run_bam_sort_index.sh $out_bam $container_arg)")
 echo index_jid $index_jid
 
 #bigwigs
 bw_sub_args="-d afterok:$index_jid -J make_bigwigs"
 if [ $sub_mode = "bash" ]; then bw_sub_args=""; fi
 if [ $mode = SE ]; then
-  echo $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg)
+  echo $bw_sub_args $JOBS_PATH/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg
+  bw_qsub=$($qsub_cmd $bw_sub_args $JOBS_PATH/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs $container_arg)
 else
-  echo $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg
-  bw_qsub=$($qsub_cmd $bw_sub_args $SCRIPTS/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg)
+  echo $bw_sub_args $JOBS_PATH/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg
+  bw_qsub=$($qsub_cmd $bw_sub_args $JOBS_PATH/run_bam_to_bigwig.chip.sh -b $sort_bam -s $star_index/chrNameLength.txt -o ${sort_bam/.bam/""}.bigwigs -pe $container_arg)
 fi
 bw_jid=$(parse_jid "$bw_qsub")
 echo bw_jid $bw_jid
@@ -202,7 +205,7 @@ echo bw_jid $bw_jid
 #SNPs
 exactSNP_sub_args="-d afterok:$index_jid -J exactSNP"
 if [ $sub_mode = "bash" ]; then exactSNP_sub_args=""; fi
-exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $SCRIPTS/run_exactSNP.all.sh -b $sort_bam -fa $fasta $container_arg)")
+exact_jid=$(parse_jid "$($qsub_cmd $exactSNP_sub_args $JOBS_PATH/run_exactSNP.all.sh -b $sort_bam -fa $fasta $container_arg)")
 
 echo exactSNP_jid $exact_jid
 
@@ -214,11 +217,11 @@ else
   completion_sub_args="-d afterok:$exact_jid:$bw_jid:$rdna_jid -J completion"
 fi
 if [ $sub_mode = "bash" ]; then completion_sub_args=""; finish_sub_args=""; fi
-complete_qsub=$($qsub_cmd $completion_sub_args $SCRIPTS/write_completion.sh ${align_path}/${root})
-$qsub_cmd $finish_sub_args $SCRIPTS/write_finish.sh ${align_path}/${root}
+complete_qsub=$($qsub_cmd $completion_sub_args $JOBS_PATH/write_completion.sh ${align_path}/${root})
+$qsub_cmd $finish_sub_args $JOBS_PATH/write_finish.sh ${align_path}/${root}
 
 if [ ! -z $input_bam ]; then #treat as chip sample and call peaks
-  macs2_cmd="$SCRIPTS/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model $container_arg"
+  macs2_cmd="$JOBS_PATH/run_chip_vs_input.sh -t $sort_bam -i $input_bam -o $align_path -p $(basename $sort_bam .bam)_macs2 -g $(basename $ref) -s $star_index/chrNameLength.txt $no_model $container_arg"
   if [ -z $input_jid ]; then #no input job dependency
     macs2_sub_args="-d afterok:$index_jid -J macs2"
   else #has input job dependency
