@@ -1,6 +1,7 @@
 #CFG --job_headers job_headers
 #CFG --job_templates job_templates
 #CFG --deployment_target ../deployed_job_scripts
+#CFG --paths_relative true
 #
 #template_script,job_name,header,processors
 run_STAR.noSort.sh,NAME,normal_job_header.txt,1
