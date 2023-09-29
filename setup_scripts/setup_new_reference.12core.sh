@@ -148,17 +148,14 @@ if [ -n "$container_type" ]; then
   #--genomeDir $out/STAR_INDEX \
   #--genomeFastaFiles FASTA/genome.fa \
   #--sjdbGTFfile GTF/current.gtf \
-  dSTAR_IDX_OUT_DIR=STAR_INDEX
-  dSTAR_FASTA_DIR=FASTA
-  dSTAR_GTF_DIR=GTF
+  dSTAR_IDX_OUT_DIR=/STAR_INDEX
+  dSTAR_FASTA_DIR=/FASTA
+  dSTAR_GTF_DIR=/GTF
 
    
-  echo $container_type STAR_IDX_OUT_DIR is $dSTAR_IDX_OUT_DIR
-  echo $container_type STAR_FASTA_DIR is $dSTAR_FASTA_DIR
-  echo $container_type STAR_GTF_DIR is $dSTAR_GTF_DIR
-
-  dir_B=$(dirname "$B")
-  dir_dB=$(dirname "$dB")
+  echo $container_type STAR_IDX_OUT_DIR is $dSTAR_IDX_OUT_DIR to $STAR_IDX_OUT_DIR
+  echo $container_type STAR_FASTA_DIR is $dSTAR_FASTA_DIR to $STAR_FASTA_DIR
+  echo $container_type STAR_GTF_DIR is $dSTAR_GTF_DIR to $STAR_GTF_DIR
 
   if [ $container_type = "docker" ]; then
   cmd_star="docker run \
@@ -181,7 +178,7 @@ if [ -n "$container_type" ]; then
   fi
   #update STAR command inputs to use docker paths
   STAR_IDX_OUT_DIR=$dSTAR_IDX_OUT_DIR
-  STAR_FASTA_DIR=$dSTAR_FASTA_DIR,
+  STAR_FASTA_DIR=$dSTAR_FASTA_DIR
   STAR_GTF_DIR=$dSTAR_GTF_DIR
 else 
   cmd_star=STAR
