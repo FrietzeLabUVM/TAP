@@ -1,4 +1,4 @@
-# TAP 
+c# TAP 
 
 Welcome to the github page for TAP (Transcriptomic Analysis Pipeline).
 
@@ -102,33 +102,11 @@ If you have multiple sequencing fastqs for a single sample, include all the fast
 
 Only R1 files should be specfied. If this had been paired-end data the R2 files would be derived be substituting the R2 suffix with the R1 suffix.  See parameters [--f1_suffix and --f2_suffix](#optional) for details and limitations.
 
-### ChIPseq configuration files
-
-Processing ChIPseq data is more complicated than RNAseq as it requires knowing how to pool replicates and how each sample pairs up to a control or input sample.
-
-Unlike RNAseq, the second column of prefixes is required and an additional 2 columns specific to ChIPseq are also required: the pooled ChIP prefixes and pooled input prefixes.
-
-The body of a ChIPseq configuration file could look like this:
-
-    #1) fastq file, 2) unique sample prefix, 3) pooled sample prefix, 4) pooled input prefix to compare to
-    fq1a.gz&fq1b.gz,MCF7_ATAD2B_rep1,MCF7_ATAD2B_pooled,MCF7_input_pooled
-    fq2.gz,MCF7_ATAD2B_rep2,MCF7_ATAD2B_pooled,MCF7_input_pooled
-    fq3.gz,MCF7_input_rep1,MCF7_input_pooled,MCF7_input_pooled
-    fq4.gz,MCF7_input_rep2,MCF7_input_pooled,MCF7_input_pooled
-
-Note how the input samples have identical entries for the pooled sample prefix and input prefix
-
-This file would result in 3 sets of peak calls: ATAD2B rep1 vs pooled input, ATAD2B rep2 vs pooled input, and ATAD2B pooled vs pooled input
-
-Input/control samples must have the same content in columns 3 and 4.
-
 ## Run the pipeline
 
 With your dependecies available, references generated, and configuration file created, you are ready to run.
 
 The pipeline submission script is `submit_rnaseq_pipeline.sh`
-
-The ChIPseq submission script is `submit_chipseq_pipeline.sh`
 
 Running is simple now:
 
@@ -183,16 +161,13 @@ To build your own reference, you will need a FASTA file and a correpsponding gen
 : Path to STAR index for organism's rDNA, will be derived from -ref if not supplied.  Without a rDNA STAR index, the rDNA alignment step is skipped.
 
 -SE, --SE
-: If activated, alignment will be in single-end mode instead of the RNA-seq default of paired-end.  For ChIP-seq, -SE is the default.
+: If activated, alignment will be in single-end mode instead of the RNA-seq default of paired-end.
 
 -PE, --PE
-: If activated, alignment will be in paried-end mode, already the default for RNA-seq.  For ChIP-seq, -SE is the default.
+: If activated, alignment will be in paired-end mode, already the default for RNA-seq.
 
 -noSub, --noSub
 : If activated, bash will be used to run all pipeline steps in serial instead of sbatch to run in parallel via the job scheduler.  For debugging only or if SLURM's sbatch is not available.
-
--noModel, --noModel
-: Only used for ChIP-seq data. Disables shifting model. Only implemented to all testing with tiny fastq files that are too small for learning the shifting model.
 
 -docker, --docker
 : Name of an installed docker image. Likely jrboyd/tap. Docker will provide all dependencies. `docker` itself still needs to be on your PATH.
