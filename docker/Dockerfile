@@ -123,3 +123,11 @@ RUN mkdir bedops  && \
   cp bin/sort-bed-typical /usr/local/bin/ && \
   cd .. && \
   rm -r bedops
+
+## gffread, used to setup references
+RUN git clone https://github.com/gpertea/gffread  && \
+  cd gffread  && \
+  make release && \
+  mv gffread /usr/local/bin/ && \
+  cd .. && \
+  rm -r gffread

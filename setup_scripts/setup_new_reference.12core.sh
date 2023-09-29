@@ -8,6 +8,7 @@
 #SBATCH -o ref_build_%j.out                 # File to which STDOUT will be written, including job ID
 #SBATCH -e ref_build_%j.err                 # File to which STDERR will be written, including job ID
 
+CPUS=12
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
@@ -17,17 +18,30 @@ while [[ "$#" -gt 0 ]]; do
     -genc|--gtf_gencode) gtf="$2"; suppa_p=""; shift ;;
     -f|--fasta) fa="$2"; shift ;;
     --genomeSAindexNbases) saIndex="$2"; shift ;;
+    -docker|--docker) docker="$2"; shift ;;
+    -singularity|--singularity) singularity="$2"; shift ;;
+    -p|--runThreadN) CPUS="$2"; shift ;;
     *) echo "Unknown parameter passed: $1"; exit 1 ;;
   esac
   shift
 done
 
 if [ -z $out ] || [ -z $gtf ] || [ -z $fa ]; then echo output \(-o\|--output\) gtf \(--gtf_ensemble\|--gtf_ucsc\|--gtf_gencode\) and fasta \(-f\|--fasta\) are all required. quit.; exit 1; fi
+#only allow 1 container type
+if [ -n "$docker" ] && [ -n "$singularity" ]; then
+  echo Only 1 of docker or signularity should be set. Quit!
+  exit 1
+fi
+container_type=""
+if [ -n "$docker" ]; then container_type="docker"; fi
+if [ -n "$singularity" ]; then container_type="singularity"; singularity=$(readlink -f $singularity); fi
+
 
 echo out will be $out
 echo gtf will be $gtf
 echo fasta will be $fa
 echo suppa_p will be $suppa_p \(ok if empty\)
+echo container_type is $container_type
 
 #if [ -d $out ]; then echo "output location $out exists! delete to or change location. quit."; exit 1; fi
 if [ ! -f $gtf ]; then echo gtf file $gtf not found! quit.; exit 1; fi
@@ -50,7 +64,7 @@ bgtf=$(basename $gtf .gz)
 echo staging gtf and fasta...
 
 #gtf
-mkdir GTF
+mkdir -p GTF
 cd GTF
 if [ $gtf = ${gtf/%.gz/""} ]; then #not a gzipped file
   cp $gtf $bgtf
@@ -64,7 +78,7 @@ awk '$3 != "gene" ' current.gtf > current.no_genes.gtf
 cd ..
 
 #fasta
-mkdir FASTA
+mkdir -p  FASTA
 cd FASTA
 cp $fa $bfa
 ln -sf $bfa genome.fa
@@ -84,35 +98,104 @@ cd ..
 echo making SUPPA2 reference...
 
 #suppa2
-SUPPA_BIN=/gpfs1/home/j/r/jrboyd/lab_bin
-suppa="$SUPPA_BIN/python $SUPPA_BIN/suppa.py"
+GTF=GTF/current.gtf
+SUPPA_REF_DIR=SUPPA2
+mkdir -p  $SUPPA_REF_DIR
 
-dest=SUPPA2
-mkdir $dest
+# container for suppa2 v1.1
+if [ -n "$container_type" ]; then
+  
+  dGTF=/input_gtf/$(basename $GTF)
+  dSUPPA_REF_DIR=/suppa_ref
 
-o=${dest}/"suppa2."$(basename ${gtf})"."
+  if [ $container_type = "docker" ]; then
+    cmd_suppa="docker run \
+      -u $(id -u):$(id -g) \
+      -v $(dirname $GTF):$(dirname $dGTF) \
+      -v $SUPPA_REF_DIR:$dSUPPA_REF_DIR \
+      --entrypoint \
+      suppa.py $docker"
+  elif [ $container_type = "singularity" ]; then
+    cmd_suppa="singularity exec \
+      --bind $(dirname $GTF):$(dirname $dGTF),$SUPPA_REF_DIR:$dSUPPA_REF_DIR \
+      $singularity suppa.py"
+  else
+    echo "Unrecognized container_type $container_type";
+    exit 1;
+  fi
+  GTF=$dGTF
+  SUPPA_REF_DIR=$dSUPPA_REF_DIR
+else
+  cmd_suppa="suppa.py"
+fi
 
+SUPPA_REF=${SUPPA_REF_DIR}/"suppa2."$(basename ${gtf})"."
 #use -p for ensembl and UCSC, not gencode
-$suppa generateEvents -i GTF/current.gtf -o $o  -f ioi $suppa_p
-
+$cmd_suppa generateEvents -i $GTF -o $SUPPA_REF  -f ioi $suppa_p
 
 for e in SE SS MX RI FL; do
-  $suppa generateEvents -i GTF/current.gtf -o $o  -f ioe -e $e $suppa_p
+  $cmd_suppa generateEvents -i $GTF -o $SUPPA_REF  -f ioe -e $e $suppa_p
 done
 
-echo making STAR index...
+STAR_IDX_OUT_DIR=$out/STAR_INDEX
+mkdir -p $STAR_IDX_OUT_DIR
+STAR_FASTA_DIR=$out/FASTA
+STAR_GTF_DIR=$out/GTF
 
-if [ -d $out/STAR_INDEX ]; then 
-  echo leaving existing STAR_INDEX as is
-else
-  echo creating STAR_INDEX
-  #star index
-  STAR --runThreadN 12 \
-  --runMode genomeGenerate \
-  --genomeDir $out/STAR_INDEX \
-  --genomeFastaFiles FASTA/genome.fa \
-  --sjdbGTFfile GTF/current.gtf \
-  --sjdbOverhang 99 \
-  --genomeSAindexNbases $saIndex
+echo making STAR index...
+if [ -n "$container_type" ]; then
+  # Derive mount points for input files inside docker
+  #--genomeDir $out/STAR_INDEX \
+  #--genomeFastaFiles FASTA/genome.fa \
+  #--sjdbGTFfile GTF/current.gtf \
+  dSTAR_IDX_OUT_DIR=STAR_INDEX
+  dSTAR_FASTA_DIR=FASTA
+  dSTAR_GTF_DIR=GTF
+
+   
+  echo $container_type STAR_IDX_OUT_DIR is $dSTAR_IDX_OUT_DIR
+  echo $container_type STAR_FASTA_DIR is $dSTAR_FASTA_DIR
+  echo $container_type STAR_GTF_DIR is $dSTAR_GTF_DIR
+
+  dir_B=$(dirname "$B")
+  dir_dB=$(dirname "$dB")
+
+  if [ $container_type = "docker" ]; then
+  cmd_star="docker run \
+    -u $(id -u):$(id -g) \
+    -v $STAR_IDX_OUT_DIR:$dSTAR_IDX_OUT_DIR \
+    -v $STAR_FASTA_DIR:$dSTAR_FASTA_DIR \
+    -v $STAR_GTF_DIR:$dSTAR_GTF_DIR \
+    --entrypoint STAR\
+    $docker \
+    "
+  elif [ $container_type = "singularity" ]; then
+  cmd_star="singularity exec \
+    --bind $STAR_IDX_OUT_DIR:$dSTAR_IDX_OUT_DIR,$STAR_FASTA_DIR:$dSTAR_FASTA_DIR,$STAR_GTF_DIR:$dSTAR_GTF_DIR \
+    $singularity \
+    STAR \
+    "
+  else
+    echo "Unrecognized container_type $container_type";
+    exit 1;
+  fi
+  #update STAR command inputs to use docker paths
+  STAR_IDX_OUT_DIR=$dSTAR_IDX_OUT_DIR
+  STAR_FASTA_DIR=$dSTAR_FASTA_DIR,
+  STAR_GTF_DIR=$dSTAR_GTF_DIR
+else 
+  cmd_star=STAR
 fi
+
+
+echo creating STAR_INDEX
+#star index
+$cmd_star --runThreadN $CPUS \
+--runMode genomeGenerate \
+--genomeDir $STAR_IDX_OUT_DIR \
+--genomeFastaFiles $STAR_FASTA_DIR/genome.fa \
+--sjdbGTFfile $STAR_GTF_DIR/current.gtf \
+--sjdbOverhang 99 \
+--genomeSAindexNbases $saIndex
+
 chmod a+rx $out/STAR_INDEX
