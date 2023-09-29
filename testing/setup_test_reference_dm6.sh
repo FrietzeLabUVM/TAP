@@ -11,7 +11,13 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+extra_args=""
+if [ -n "$docker" ]; then extra_args=$extra_args"--docker $docker "; fi
+if [ -n "$singularity" ]; then extra_args=$extra_args"--singularity $(readlink -f $singularity) "; fi
+if [ -n "$CPUS" ]; then extra_args=$extra_args"--runThreadN $CPUS "; fi
+
 SCRIPT_PATH=$(dirname "$(readlink -f "$0")")
+cd $SCRIPT_PATH
 if [ ! -f dm6.fa ]; then
  wget https://hgdownload.soe.ucsc.edu/goldenPath/dm6/bigZips/dm6.fa.gz
  gunzip dm6.fa.gz
@@ -20,8 +26,5 @@ if [ ! -f dm6.ensGene.gtf.gz ]; then
  wget https://hgdownload.soe.ucsc.edu/goldenPath/dm6/bigZips/genes/dm6.ensGene.gtf.gz
 fi
 
-extra_args=""
-if [ -n "$docker" ]; then extra_args=$extra_args"--docker $docker "; fi
-if [ -n "$singularity" ]; then extra_args=$extra_args"--singularity $singularity "; fi
-if [ -n "$CPUS" ]; then extra_args=$extra_args"--runThreadN $CPUS "; fi
-bash "$SCRIPT_PATH"/../setup_scripts/setup_new_reference.sh -o "$SCRIPT_PATH"/references/dm6 --gtf_ensemble dm6.ensGene.gtf.gz -f dm6.fa --genomeSAindexNbases 12 $extra_args
+
+bash ../setup_scripts/setup_new_reference.sh -o references/dm6 --gtf_ensemble dm6.ensGene.gtf.gz -f dm6.fa --genomeSAindexNbases 12 $extra_args

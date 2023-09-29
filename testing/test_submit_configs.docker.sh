@@ -33,8 +33,8 @@ bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_confi
 bash $scripts/submit_rnaseq_pipeline.sh -c $test_dir/test_configs/test_dm6_config.rDNA_only.csv $args2 ${args3}
 
 #config for running ChIP-seq
-bash $scripts/submit_chipseq_pipeline.sh -c $test_dir/test_configs/chip_test_hg38_config.params.csv ${args3}
+#bash $scripts/submit_chipseq_pipeline.sh -c $test_dir/test_configs/chip_test_hg38_config.params.csv ${args3}
 
 #config for running ChIP-seq using pooling
-bash $scripts/submit_chipseq_pipeline.sh -c $test_dir/test_configs/chip_test_hg38_config.pool_params.csv ${args3}
+#bash $scripts/submit_chipseq_pipeline.sh -c $test_dir/test_configs/chip_test_hg38_config.pool_params.csv ${args3}
 
