@@ -1,3 +1,4 @@
+#!/bin/bash
 dock_test_dir=$(dirname "$0")
 dock_test_dir=$(readlink -f $dock_test_dir)
 scripts=$(dirname $dock_test_dir)
