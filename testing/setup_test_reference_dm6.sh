@@ -28,3 +28,4 @@ fi
 
 
 bash ../setup_scripts/setup_new_reference.sh -o references/dm6 --gtf_ensemble dm6.ensGene.gtf.gz -f dm6.fa --genomeSAindexNbases 12 $extra_args
+bash ../setup_scripts/setup_new_reference.sh -o references/dm6.rDNA -f DMrDNA.Dmel_CR45847.Dmel_CR45844.fa --genomeSAindexNbases 12 $extra_args --rDNA

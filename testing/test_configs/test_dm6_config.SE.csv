@@ -1,4 +1,4 @@
-#CFG -ref ~/lab_shared/indexes/DM6 -o testing/test_outputs/test_alignment.SE
+#CFG -ref testing/references/dm6 -o testing/test_outputs/test_alignment.SE
 #regular comment, not used, rep4 is special and has no R2 at all
 #CFG -i testing/test_data/fastq_rnaseq_PE
 #CFG -SE

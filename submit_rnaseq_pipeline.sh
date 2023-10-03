@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 SCRIPT_PATH=$(dirname "$(readlink -f "$0")")
 #echo $SCRIPT_PATH
 
@@ -150,15 +150,9 @@ for f1 in $todo; do
     root=$(echo $f1 | awk -v FS="," '{print $2}');
     f1=$(echo $f1 | awk -v FS="," '{print $1}');# | awk -v FS=" " -v OFS="&" '$1=$1; {print $0}');
   fi
-  #echo $f1
-  #f1=${f1//" "/"&"}
-  #echo $f1
   f1=${f1//"&"/" "}
-  #echo $f1
-  #exit 0
   ff1=""
   for f in $f1; do if [ -z "$ff1" ]; then ff1="$input/$(basename $f)"; else ff1="$ff1 $input/$(basename $f)"; fi; done
-  #if [ ! -f $f1 ]; then f1=$input/$f1; fi
   f1=$ff1
   for f in $f1; do if [ ! -f $f ]; then echo fastq1 was not found, $f. quit!; exit 1; fi; done
   if [ $read_mode != SE ]; then

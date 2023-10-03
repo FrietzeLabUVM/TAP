@@ -1,15 +1,17 @@
 set -e
+
 dock_test_dir=$(dirname "$0")
 dock_test_dir=$(readlink -f $dock_test_dir)
 scripts=$(dirname $dock_test_dir)
 #dock_test_dir=$scripts/testing_docker
 #cd $dock_test_dir
 test_dir=${scripts}/testing
+
 #args2="-noSub"
 args3="--docker jrboyd/tap -noSub"
-args3="--singularity $(readlink -f $dock_test_dir/../tap_latest.sif) -noSub"
-args="-i $test_dir/test_data/fastq_rnaseq_PE -ref $(readlink -f ~/lab_shared/indexes/DM6)"
+#args3="--singularity $(readlink -f $dock_test_dir/../tap_latest.sif) -noSub"
 
+args="-i $test_dir/test_data/fastq_rnaseq_PE -ref $(readlink -f $test_dir/references/dm6)"
 #no config file
 bash $scripts/submit_rnaseq_pipeline.sh -o $dock_test_dir/test_outputs/test_alignment.no_config -SE $args $args2 ${args3}
 
