@@ -60,7 +60,8 @@ wget https://github.com/alexdobin/STAR/archive/2.7.10b.tar.gz && \
   rm 2.7.10b.tar.gz
 
 ## MACS2
-pip install macs3 && \
+pip pip3 install --upgrade pip && \
+  install macs3 && \
   ln -s /usr/local/bin/macs3 /usr/local/bin/macs2
 
 ## salmon
@@ -114,3 +115,21 @@ wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/3.0.5/sratoolkit.3.0.5-ubuntu64.
   mv sratoolkit.3.0.5-ubuntu64/bin/* /usr/local/bin/ && \
   rm -r sratoolkit.3.0.5-ubuntu64 && \
   rm sratoolkit.3.0.5-ubuntu64.tar.gz
+
+## bedops, provides RAM limited alternative to bedSort
+mkdir bedops  && \
+  cd bedops  && \
+  wget https://github.com/bedops/bedops/releases/download/v2.4.41/bedops_linux_x86_64-v2.4.41.tar.bz2 && \
+  tar -xf bedops_linux_x86_64-v2.4.41.tar.bz2 && \
+  cp bin/sort-bed /usr/local/bin/ && \
+  cp bin/sort-bed-typical /usr/local/bin/ && \
+  cd .. && \
+  rm -r bedops
+
+## gffread, used to setup references
+git clone https://github.com/gpertea/gffread  && \
+  cd gffread  && \
+  make release && \
+  mv gffread /usr/local/bin/ && \
+  cd .. && \
+  rm -r gffread
