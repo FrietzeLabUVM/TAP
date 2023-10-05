@@ -5,6 +5,7 @@ echo $0 $@
 SALMON_RESULT=$1
 GTF=$2
 SUPPA_REF=$3
+SUPPA_REF=$(readlink -f $SUPPA_REF)
 SUPPA_REF_local=$SUPPA_REF
 container=$5
 

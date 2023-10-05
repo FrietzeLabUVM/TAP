@@ -143,6 +143,8 @@ if [ ! -z $singularity ]; then
 fi
 echo container_arg is $container_arg
 
+
+
 parse_jid () { #parses the job id from output of qsub
         #echo $1
         if [ -z "$1" ]; then
@@ -174,7 +176,19 @@ date > ${align_path}/${root}.start
 $qsub_cmd $JOBS_PATH/echo_submission.sh $0 $#
 
 #align script
+if [ -n "$container_arg" ]; then
+  newF1=""
+  for f in $F1; do
+    newF1="$newF1 $(readlink -f $f)"
+  done
+  newF1=${newF1/" "/""}
+  F1=$newF1
+
+  star_index=$(readlink -f $star_index)
+fi
 F1=${F1//" "/"&"}
+
+
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
 align_sub_args="-J STAR_align"

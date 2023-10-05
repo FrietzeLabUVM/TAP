@@ -1,4 +1,4 @@
-d#!/bin/bash
+#!/bin/bash
 #SLURM pipeline for RNAseq
 
 SCRIPTS=$(dirname "$(readlink -f "$0")")
@@ -41,8 +41,11 @@ if [ ! -d $JOBS_PATH ]; then echo could not find job script directory $JOBS_PATH
 
 #if [ -z $ref ]; then echo need star index location for -idx; exit 1; fi
 if [ -z $F1 ]; then echo need fastq1 as -f1! quit; exit 1; fi
-if [ ! -z $in_path ]; then F1=${in_path}/${F1}; fi
-in_path=$(readlink -f $in_path)
+if [ ! -z $in_path ]; then 
+  F1=${in_path}/${F1}; 
+  in_path=$(readlink -f $in_path)
+fi
+
 F1=${F1//"&"/" "}
 for f in $F1; do if [ ! -f $f ]; then echo fastq1 $f could not be found! quit; exit 1; fi; done
 #if [ -z $gtf ]; then echo need gtf as -g; exit 1; fi
@@ -170,6 +173,17 @@ date > ${align_path}/${root}.start
 $qsub_cmd $JOBS_PATH/echo_submission.sh $0 $#
 
 #align script
+if [ -n "$container_arg" ]; then
+  newF1=""
+  for f in $F1; do
+    newF1="$newF1 $(readlink -f $f)"
+  done
+  newF1=${newF1/" "/""}
+  F1=$newF1
+
+  star_index=$(readlink -f $star_index)
+fi
+F1=${F1//" "/"&"}
 F1=${F1//" "/"&"}
 se_mode=""
 if [ $mode = SE ]; then se_mode="-SE"; fi
