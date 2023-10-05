@@ -1,4 +1,4 @@
-c# TAP 
+## TAP 
 
 Welcome to the github page for TAP (Transcriptomic Analysis Pipeline).
 
