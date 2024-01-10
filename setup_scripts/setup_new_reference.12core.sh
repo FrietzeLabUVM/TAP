@@ -131,7 +131,7 @@ if [ $rdna_mode != true ]; then
     cmd_gffread="gffread"
   fi
 
-  $cmd_gffread -F -w FASTA/$tfa -g FASTA/$bfa GTF/current.no_genes.gtf
+  $cmd_gffread -F -w $GFF_FA/$tfa -g $GFF_FA/$bfa $GFF_GTF/current.no_genes.gtf
   cd FASTA
   ln -sf $tfa transcriptome.fa
   cd ..
