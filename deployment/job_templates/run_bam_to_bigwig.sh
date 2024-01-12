@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 echo script:
 echo $0
 echo args:
@@ -199,4 +199,5 @@ cd ..
 echo delete "$tmpdir" if bigwigs look good
 #rm -r $tmpdir
 #rm ${cell_line}_${extraction}_${replicate}_normalized.bedgraph
+echo FINISHED
 

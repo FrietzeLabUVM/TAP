@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 echo $0 $@
 
 SALMON_RESULT=$1
@@ -79,4 +79,5 @@ for ioe in $SUPPA_REF_local/*ioe; do
   echo "$cmd_full"
   $cmd_full
 done
+echo FINISHED
 

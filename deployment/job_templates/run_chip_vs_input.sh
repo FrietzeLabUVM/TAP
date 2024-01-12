@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 ### runs MACS2 (tight, loose, and broad) generates FE bigwigs
 BDG="--bdg"
 extra=""
@@ -273,3 +273,5 @@ if [ $BDG = "--bdg" ]; then
     $run_bedGraphToBigWig
 	fi
 fi
+echo FINISHED
+

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 #pools the input comma delimited list of bam files into the output file
 #arg 1 is comma separated list of bam files
 #arg 2 is name of output pooled bam file
@@ -39,4 +39,5 @@ else
         samtools index $pooled
 fi
 echo done
+echo FINISHED
 

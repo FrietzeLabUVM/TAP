@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 libType=SE
 
 while [[ "$#" -gt 0 ]]; do
@@ -185,4 +185,4 @@ cd ..
 #echo delete "$tmpdir" if bigwigs look good
 rm -r $tmpdir
 #rm ${cell_line}_${extraction}_${replicate}_normalized.bedgraph
-
+echo FINISHED

@@ -1,0 +1,374 @@
+---
+title: "TAPhelpR_honeybee_example"
+author: "Joe Boyd"
+date: "2023-12-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+# TAPhelpR
+
+This document contains a complete workflow for TAP.  From installation of the TAP pipeline and its companion R package TAPhelpR through a differential expression and splicing analysis. Instructions for downloading an *Apis mellifera* RNAseq experiment and appropriate genomic reference files are included.
+
+## Table of Contents
+
+1. [Installation](#installation)
+2. [Dependencies](#installing-dependencies)
+3. [Organism References](#obtaining-reference)
+4. [Getting fastq Files](#obtaining-fastq-files)
+5. [Configs](#configs)
+6. [Monitoring TAP](#while-running-tap)
+7. [Using TAP Outputs](#after-running-tap)
+
+# Installation
+
+## Main Pipeline
+
+Installing TAP 
+
+```{bash, eval = FALSE}
+git clone git@github.com:FrietzeLabUVM/TAP.git
+cd TAP
+```
+
+There is one general setup step required once per TAP installation. Prior to running TAP jobs, scripts must be deployed. This process ensures TAP knows how to best utilize the job scheduler if you're working on a HPC (high performance computing environment, i.e. a cluster). If you are not on an HPC it's still required to run the following command but you can skip over the details.
+
+```{bash, eval=FALSE}
+bash deployment/deploy_TAP_scripts.sh -c deployment/deployment_configs/generic_deployment_config.csv
+```
+
+Modify the `deployment/deployment_configs/generic_deployment_config.csv` file for compatibility with your HPC. Currently deployment has only been tested for SLURM but please contact jrboyd@uvm.edu for help deploying on SGE or other scheduler systems.
+
+## TAPhelpR R package
+
+The TAP companion R package helps with preparing to run TAP and with utilizing the outputs.
+
+```{r, eval = FALSE}
+if(!require("devtools")){
+  install.packages("devtools")
+}
+# This optional dependency has fallen out of Bioconductor and must be installed manually. 
+# It is only required to download data from ENCODE.
+devtools::install_github("CharlesJB/ENCODExplorer")
+devtools::install_github("FrietzeLabUVM/TAPhelpR")
+```
+
+# Before Running TAP
+
+All bash commands are assumed to be running from the directory where you've installed TAP.
+
+## Installing Dependencies
+
+It is strongly recommended that you use either [singularity](https://docs.sylabs.io/guides/3.0/user-guide/installation.html) or [docker](https://docs.docker.com/engine/install/) to satisfy dependencies. When working on a cluster, you probably only have singularity as an option. 
+
+Commands in this demonstration will assume the use of singularity.
+
+The singularity image file can be created as follows. You'll need to add `--singularity tap_latest.sif` to TAP script calls.
+
+```{bash, eval = FALSE}
+# creates tap_latest.sif
+bash setup_scripts/pull_singularity_image.sh
+```
+
+The docker image can be downloaded as follows. You'll need to add `--docker jrboyd/tap image` to TAP script calls.
+
+```{bash, eval = FALSE}
+# pulls jrboyd/tap image
+bash setup_scripts/pull_docker_image.sh
+```
+
+Manual installation of dependencies is not recommended. If you do successfully add all dependencies to your PATH, there is not special command addon required, in contrast to using singularity or docker.
+
+```{bash, eval = FALSE}
+# not expected to work
+# you'll need to run equivalent commands on your system and address errors as they arise
+bash setup_scripts/manual_install_dependencies.sh
+```
+
+## Obtaining Reference
+
+You can download FASTA and GTF from [NCBI](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_003254395.2/) for a more recent assembly, 2018.
+
+![NCBI download page](./assets/apis_ncbi_dl.png)
+
+This example includes generating UCSC tracks so we could redo with [UCSC's Apis mellifera reference](https://genome.ucsc.edu/cgi-bin/hgTables?hgsid=1866825480_kUjKbwmnk1JFCqBxamrW78d96Ao6). NCBI version is not on UCSC genome browser.
+[genomic fasta](https://hgdownload.soe.ucsc.edu/goldenPath/apiMel2/bigZips/apiMel2.fa.gz)
+[gene reference](https://hgdownload.soe.ucsc.edu/goldenPath/apiMel2/database/ensGene.txt.gz)
+
+## Creating reference
+
+The *reference* directory should be generated using `setup_scripts/setup_new_reference.sh` from the directory where TAP is installed. This script requires 2 minimal inputs with some additional options. You must provide a single .fasta file and compatible (same organism assembly) gene reference .gtf/.gff file.
+
+Let's assume you downloaded the NCBI fasta and gtf files as described in the previous section and moved the .zip file to your TAP installation directory.
+
+```{bash, eval = FALSE}
+unzip ncbi_dataset.zip
+# fasta files ending in .fasta or .fa are expected. .fna merely indicates that it's a fasta file with nucleotide information.
+mv ncbi_dataset/data/GCF_003254395.2/GCF_003254395.2_Amel_HAv3.1_genomic.fna ncbi_dataset/data/GCF_003254395.2/GCF_003254395.2_Amel_HAv3.1_genomic.fasta
+bash setup_scripts/setup_new_reference.sh \
+  -f ncbi_dataset/data/GCF_003254395.2/GCF_003254395.2_Amel_HAv3.1_genomic.fasta \
+  -gens ncbi_dataset/data/GCF_003254395.2/genomic.gtf \
+  -o indexes/honeybee \
+  --genomeSAindexNbases 12 \
+  --singularity tap_latest.sif
+# --genomeSAindexNbases 12 is required for smaller genomes. For mammalian genomes the default of 14 works fine.
+  
+```
+
+## R Setup
+
+```{r}
+library(TAPhelpR)
+library(tidyverse)
+```
+
+The following parameters control relevant file and directory locations. Modify them to suit your local system.
+
+```{r parameters, eval=FALSE}
+tap_in = "input_fastq"
+tap_out = "output_TAP"
+tap_ref = "indexes/honeybee"
+tap_singularity = "tap_latest.sif"
+tap_config = "honeybee_config.csv"
+```
+```{r, include=FALSE}
+#should not be in rmarkdown output but should be run
+tap_in = "input_fastq"
+tap_out = "output_TAP"
+tap_ref = "indexes/honeybee"
+tap_singularity = "~/installs/TAP/tap_latest.sif"
+tap_config = "honeybee_config.csv"
+```
+
+## Obtaining fastq files
+
+TAPhelpR contains a file mapping SRR accessions to useful file names. The following code loads this file and then subsets it to download, rename, and compress, a selection of relevant fastq files.
+
+```{r, eval=FALSE, include=FALSE}
+#this should not be in rmarkdown output
+#other version will not work
+df_srr = example_honeybee_metadata()
+df_srr = df_srr %>% 
+  separate(name, into = c("species", "day", "role", "rep"), remove = FALSE)
+# for demonstration we will filter to 2 reps from a single day. 
+# skip this filter step to work with the complete dataset.
+df_srr = df_srr %>% filter(day == "4days") %>% filter(rep %in% c("rep1", "rep2"))
+SRA_download_files(srr_tofetch = df_srr$srr, fastq_prefixes = df_srr$name, singularity = "~/installs/TAP/tap_latest.sif", out_dir = tap_in, ncores = 8)  
+```
+
+```{r, eval=FALSE}
+df_srr = example_honeybee_metadata()
+df_srr = df_srr %>% 
+  separate(name, into = c("species", "day", "role", "rep"), remove = FALSE)
+# for demonstration we will filter to 2 reps from a single day. 
+# skip this filter step to work with the complete dataset.
+df_srr = df_srr %>% filter(day == "4days") %>% filter(rep %in% c("rep1", "rep2"))
+SRA_download_files(srr_tofetch = df_srr$srr, fastq_prefixes = df_srr$name, singularity = tap_singularity, out_dir = tap_in, ncores = 8)  
+```
+
+If you want to download data from GEO or ENCODE there are additional helper functions for that.
+
+`GEO_download_files`
+
+`ENCODE_download_files`
+
+## Configs
+
+### Generate Config
+
+Configuration files are strongly recommended to run TAP. They can control all command line parameters and also set paths to fastq files. You should also take the opportunity to rename samples to something more meaningful and easier to work with. If you have sequencing replicates, they can be aggregated to single samples in the config.
+
+To use TAPhelpR to generate your config file, you need 2 things. A directory with *reference* files and a directory with *fastq.gz* files. 
+
+The *reference* directory should be generated using `setup_scripts/setup_new_reference.sh` from the directory where TAP is installed. This script requires 2 minimal inputs with some additional options. You must provide a single .fasta file and compatible (same organism assembly) gene reference .gtf/.gff file.
+
+The *fastq.gz* files must be gzipped should be for both reads if you have paired-end data. They also must have consistent suffixes (i.e. all end in _R1_001.fastq.gz or _R2_001.fastq.gz for PE data or all end in _R1_001.fastq.gz for SE data).  It's OK if your suffixes differ from these defaults, just be sure you specify f1_suffix (and f2_suffix for PE data) when creating the config file.
+
+```{r config create}
+cfg = config_create(
+  inDir = tap_in,
+  f1_suffix = "_R1_001.fastq.gz", #these suffixes are defaults but should match your files
+  f2_suffix = "_R2_001.fastq.gz",
+  outDir = tap_out,
+  singularity = tap_singularity,
+  reference = tap_ref
+)
+```
+
+`config_create` only gathers the information required to write the config file. We have the opportunity to add some important information before writing this config.
+
+In our case, as an exercise we will change "honeybee" to the assembly, "Amel_HAv3.1".
+
+```{r config modify}
+# data.frame from config_create contains fastq file names and default sample name (fastq with suffix removed).
+cfg_fq = cfg$fastq_lines
+cfg_fq$name = sub("honeybee", "Amel_HAv3.1", cfg_fq$name)
+# replace fastq data.frame in cfg 
+cfg$fastq_lines = cfg_fq
+```
+
+Now we want to write the config file.
+
+```{r config write, results=FALSE}
+config_write(cfg, tap_config, overwrite = TRUE)
+```
+
+### Validate Config
+
+Prior to running TAP, it's a good idea to validate our config file. This validation will not catch all possible errors but focuses on the most common and hardest to diagnose.
+
+```{r pressure}
+config_validate(tap_config)
+```
+
+Note the output of the above is a data.frame with fastq files as the rownames and the _/. delimited name elements split. This also allows you to verify that your names are well formed. Well formed names have the same number of elements. Poorly formed names will make downstream analysis more painful as you'll constantly have to add additional code to handle these inconsistencies.
+
+You'll see a warning if sample names are not well formed.
+
+# Run TAP
+
+Running TAP is the easy part.
+
+```{bash, eval=FALSE}
+bash submit_rnaseq_pipeline.sh -c honeybee_config.csv 
+```
+
+```{bash, eval=FALSE, include=FALSE}
+#this should not be in markdown output but works on galaxy
+bash ~/installs/TAP/submit_rnaseq_pipeline.sh -c honeybee_config.csv 
+```
+
+# While running TAP
+
+## Evaluate completeness
+
+After submitting the TAP pipeline, it's nice to know how close to completion it is.  Once it's finished, identifying and debugging any errors is also critical. `TAPhelpR` provides a series of *report* functions for this purpose.
+
+`report_completion` is the most basic of these functions. It simply checks for the existence of 3 files that TAP write to record its status.
+
+```{r report_complete, message=TRUE, eval=FALSE}
+report_completion(tap_out)
+```
+Here we see a message reporting the number of samples that have begun running and: 1) how many are still processing and 2) how many have finished with no errors.
+
+If all samples have finished without error there's no reason to investigate further.
+
+For a more detailed report of progress, use `report_progress`. You'll receive a warning if any steps failed to complete due to errors.
+
+```{r, eval=FALSE}
+report_progress(tap_out)
+report_progress_plot(tap_out)
+```
+
+![TAP progress report plot](./assets/TAP_in_progress_2.png)
+
+Eventually all jobs will complete.
+
+![TAP progress report plot](./assets/TAP_complete_1.png)
+
+Finally, if there were errors, use `report_errors`.
+
+```{r report_errors, eval=FALSE}
+report_errors(tap_out)
+```
+
+This will return paths to all of the relevant .error log files. You'll need to investigate these files to diagnose and resolve the errors. You may need to delete affected files but then you can resubmit TAP using the same output. You must allow TAP to finish running or cancel remaining jobs before resubmitting.
+
+# After running TAP
+
+## Working with outputs
+
+Only proceed once `report_completion` returns 100% completed successfully.
+
+TAPhelpR contains several setup_*_files functions to create a convenient data.frame containing file paths and meta data.
+
+```{r TAP_setup_files}
+bam_files = setup_bam_files(tap_out, variable_map = c("species", "assembly", "assembly_version", "day", "role", "rep"))
+```
+
+The generic equivalent of the above looks like this:
+
+```{r TAP_setup_files2}
+setup_files(tap_out, pattern = "sortedByCoord.out.bam$", variable_map = c("species", "day", "role", "rep"))
+```
+
+## Run suppa2 diffSplice
+
+`suppa2` conducts differential splicing analysis and TAPhelpR provides several wrapper functions for steps required to run `suppa2`
+
+`joinFiles` groups replicates.
+
+```{r suppa2_join, eval=FALSE}
+suppa_joinFiles(bam_files, by = "role")
+```
+
+`diffSplice` performs differential analysis between groups specified in `joinFiles`.
+
+```{r suppa2_diff, eval=FALSE}
+suppa_diffSplice(
+  ref_location = example_honeybee_reference(),
+  PSI_todo = TAP_SPLICE_EVENTS$SkippingExon)
+```
+
+This variant of `diffSplice` allows more complicated specification of analysis "bins" that should be isolated. In this examples, *within* each "day" group, differences will be calculated *between* each "role" group.
+
+```{r suppa2_diff_group, eval=FALSE}
+suppa_diffSplice.within_group(
+  input_files = bam_files,
+  within_group = "day",
+  between_group = "role",
+  ref_location = example_honeybee_reference(),
+  PSI_todo = TAP_SPLICE_EVENTS$SkippingExon)
+```
+
+Clustering events can help makes the differential results more interpretable.
+
+```{r suppa2_cluster, eval=FALSE}
+suppa_clusterEvents(PSI_todo = TAP_SPLICE_EVENTS$SkippingExon)
+```
+
+## Counts and DESeq2
+
+To get to the entrypoint for a standard DESeq2 workflow is only a few lines of code.
+
+Loading raw counts is simple.
+
+```{r, load_counts}
+mat = load_counts(tap_out)
+head(mat)
+```
+Raw counts will be per "gene_id" in reference by default. If you provide the gtf reference, TAPhelpR can convert to "gene_name" or a different, human friendly, attribute.
+
+```{r, load_counts_gene_name, eval=FALSE}
+#if you supply the reference gtf file, or GRanges of same, to load_counts, gene_ids in counts will be aggregated to gene_name
+mat.gene_name = load_counts(tap_out, gtf_file = tap_ref, name_attribute = "gene")
+```
+
+The final bit of information needed is the colData with sample metadata.
+
+```{r deseq2}
+library(DESeq2)
+meta_df = bam_files
+meta_df$file = NULL
+meta_df = dplyr::mutate(meta_df, name = paste(day, role, rep, sep = "_"))
+colnames(mat) = sub("Amel_HAv3.1_", "", colnames(mat))
+des = DESeqDataSetFromMatrix(mat[, meta_df$name], colData = meta_df, design = ~role)
+# and run from there ...
+```
+
+## UCSC tracks
+
+UCSC tracks are extremely useful for looking at individual genes in detail.
+
+```{r, ucsc stage, eval=FALSE}
+stage_output_for_UCSC_tracks(tap_out, track_hosting_dir = "~/public_files/honeybee", overwrite = TRUE)
+```
+
+launch shiny app
+
+```{r, ucsc launch, eval=FALSE}
+launch_UCSC_tracks_app.UVM_galaxy(track_hosting_dir = "~/public_files/honeybee")
+```

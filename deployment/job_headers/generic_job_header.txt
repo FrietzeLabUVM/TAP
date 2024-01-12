@@ -1,0 +1,9 @@
+#SBATCH --nodes=1                          # Request one core
+#SBATCH --ntasks-per-node=1                # Request one node (if you request more than one core with -n, also using
+#SBATCH --cpus-per-task=__CPUS__                 # -N 1 means all cores will be on the same node)
+#SBATCH -t __TIME__                         # Runtime in D-HH:MM format
+#SBATCH -p __PARTITION__                        # Partition to run in
+#SBATCH --mem=__MEMORY__                        # Memory total in MB (for all cores)
+#SBATCH -o __JOB_NAME___%j.out                # File to which STDOUT will be written, including job ID
+#SBATCH -e __JOB_NAME___%j.err                # File to which STDERR will be written, including job ID
+

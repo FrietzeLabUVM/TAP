@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 echo $0 $@
 
 BAM=$1
@@ -68,4 +68,4 @@ $cmd_samtools index $OUT_BAM
 
 if [ -f ${lOUT_BAM}.bai ]; then rm $lBAM; fi
 echo $lOUT_BAM
-
+echo FINISHED

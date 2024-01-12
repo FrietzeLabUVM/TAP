@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 POOLNAME=$1
 
 PEAKS=$2
@@ -80,6 +80,8 @@ while [ $i -lt $arrLen ]; do
   done; 
   i=$(( $i + 1 )); 
 done
+
+echo FINISHED
 
 exit 0
 

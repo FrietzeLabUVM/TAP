@@ -1,0 +1,35 @@
+#CFG --job_headers job_headers
+#CFG --job_templates job_templates
+#CFG --deployment_target ../deployed_job_scripts
+#CFG --paths_relative true
+#,,,,,,
+#template_script,job_name,header,processors,time,partition,memory
+run_STAR.noSort.sh,STAR_rna,generic_job_header.txt,16,1-06:00,bluemoon,32000
+run_STAR.rDNA.sh,STAR_rna_rDNA,generic_job_header.txt,16,1-06:00,bluemoon,32000
+run_STAR.chip_rDNA.sh,STAR_chip_rDNA,generic_job_header.txt,16,1-06:00,bluemoon,32000
+run_STAR.chip.sh,STAR_chip,generic_job_header.txt,16,1-06:00,bluemoon,32000
+#,,,,,,
+run_bam_sort_index.sh,bam_sort,generic_job_header.txt,1,1-06:00,bluemoon,32000
+#,,,,,,
+run_chip_vs_input.sh,chip_vs_input,generic_job_header.txt,1,1-06:00,bluemoon,32000
+run_pool_bams.sh,pool_bams,generic_job_header.txt,1,1-06:00,bluemoon,32000
+#,,,,,,
+run_macs2.sh,macs2,generic_job_header.txt,1,1-06:00,bluemoon,32000
+run_macs2.broad.sh,macs2_broad,generic_job_header.txt,1,1-06:00,bluemoon,32000
+run_np2bb.sh,make_bigBed,generic_job_header.txt,1,1-06:00,bluemoon,32000
+#,,,,,,
+run_salmon_quant.sh,salmon_quant,generic_job_header.txt,1,1-06:00,bluemoon,32000
+run_suppa2.sh,suppa2,generic_job_header.txt,1,1-06:00,bluemoon,32000
+#,,,,,,
+run_exactSNP.all.sh,exactSNP,generic_job_header.txt,1,1-06:00,bluemoon,32000
+#,,,,,,
+run_bam_to_bigwig.chip.sh,bamToBigWig_chip,generic_job_header.txt,1,1-06:00,bluemoon,32000
+run_bam_to_bigwig.sh,bamToBigWig_rna,generic_job_header.txt,1,1-06:00,bluemoon,32000
+#,,,,,,
+run_chip_rep_comparison.sh,chip_rep_comp,generic_job_header.txt,1,1-06:00,bluemoon,32000
+run_chip_differential.sh,chip_diff,generic_job_header.txt,1,1-06:00,bluemoon,32000
+#,,,,,,
+echo_submission.sh,submission,generic_job_header.txt,1,0-3:00,short,8000
+write_completion.sh,completion,generic_job_header.txt,1,0-3:00,short,8000
+write_finish.sh,finish,generic_job_header.txt,1,0-3:00,short,8000
+

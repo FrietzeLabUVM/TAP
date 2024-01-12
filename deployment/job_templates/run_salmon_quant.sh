@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 echo $0 $@
 
 BAM=$1
@@ -62,3 +62,5 @@ if [ -z "$runThreadN" ]; then runThreadN=1; fi
 #if [ -d $OUT ]; then echo output $OUT already exists, will not rerun.; exit 0; fi
 cmd="$cmd_salmon quant -p $runThreadN -t $GTF -l A -a $BAM -o $OUT --gencode"
 $cmd
+echo FINISHED
+

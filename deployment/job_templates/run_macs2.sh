@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 BDG="--bdg"
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -96,3 +96,5 @@ fi
 echo cmd is:
 echo $cmd
 $cmd
+echo FINISHED
+

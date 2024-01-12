@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 echo $0 $@
 
 while [[ "$#" -gt 0 ]]; do
@@ -74,3 +74,5 @@ if [ $run = "yes" ]; then
 else
   echo found ${OUT_SNP_FILE_local}. no rerun.
 fi
+echo FINISHED
+

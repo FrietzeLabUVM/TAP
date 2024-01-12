@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 echo TREAT_BAM is $TREAT_BAM
 echo INPUT_BAM is $INPUT_BAM
 echo OUTDIR is $OUTDIR
@@ -78,4 +78,5 @@ fi
 echo cmd is:
 echo $cmd
 $cmd
+echo FINISHED
 

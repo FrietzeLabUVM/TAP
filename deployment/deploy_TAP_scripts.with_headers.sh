@@ -106,9 +106,6 @@ for f1 in $todo; do
   job_name=$(echo $f1 | awk -v FS="," '{print $2}');
   header_file=$jh/$(echo $f1 | awk -v FS="," '{print $3}');
   n_proc=$(echo $f1 | awk -v FS="," '{print $4}');
-  job_time=$(echo $f1 | awk -v FS="," '{print $5}');
-  partition=$(echo $f1 | awk -v FS="," '{print $6}');
-  job_mem=$(echo $f1 | awk -v FS="," '{print $7}');
   echo "  temp_script $temp_script"
   echo "  job_name $job_name"
   echo "  header_file $header_file"
@@ -117,7 +114,7 @@ for f1 in $todo; do
   if [ -z "$out_f" ]; then echo something has gone wrong with out_f: "$out_f"; exit 1; fi
   if [ -f "$out_f" ] && [ $force != "true" ]; then echo something has gone wrong with out_f: "$out_f"; exit 1; fi
   echo '#!/bin/bash' > "$out_f"
-  sed "s/__JOB_NAME__/$job_name/g" "$header_file" | sed "s/__CPUS__/$n_proc/g" | sed "s/__TIME__/$job_time/g" | sed "s/__PARTITION__/$partition/g" | sed "s/__MEMORY__/$job_mem/g">> "$out_f"
+  sed "s/__JOB_NAME__/$job_name/g" "$header_file" | sed "s/__CPUS__/$n_proc/g" >> "$out_f"
   awk '{if (NR > 1){print $0}}' "$temp_script" >> "$out_f"
   sed -i "s/runThreadN=\$CPUS/runThreadN=$n_proc/g" "$out_f"
 done

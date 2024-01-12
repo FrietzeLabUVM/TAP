@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 #alignment script developed for dbgap data, uses ENCODE standards
 #assumes data is paired end fastq.gz and files end in _R1_001.fastq.gz
 
@@ -162,3 +162,5 @@ cmd="$cmd \
 "
 echo "$cmd"
 $cmd
+echo FINISHED
+
