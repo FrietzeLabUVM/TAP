@@ -2,6 +2,10 @@
 
 Welcome to the github page for TAP (Transcriptomic Analysis Pipeline).
 
+For a complete use case from download and installation through DESeq2 see [here](https://frietzelabuvm.github.io/TAP/).
+
+For details on TAP's companion R package, TAPhelpR, see [here](https://github.com/FrietzeLabUVM/TAPhelpR).
+
 ## What is TAP?
 
 TAP is a pipeline for processing RNA-seq datasets, starting from gzipped fastq files (fastq.gz) and resulting in several useful output files. Such as:
