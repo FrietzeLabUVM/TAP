@@ -5,7 +5,7 @@
 #
 #template_script,job_name,header,processors
 run_STAR.noSort.sh,STAR_rna,normal_job_header.txt,16
-run_STAR.rDNA.sh,STAR_rna_rDNA,NAME,normal_job_header.txt,16
+run_STAR.rDNA.sh,STAR_rna_rDNA,normal_job_header.txt,16
 run_STAR.chip_rDNA.sh,STAR_chip_rDNA,normal_job_header.txt,16
 run_STAR.chip.sh,STAR_chip,normal_job_header.txt,16
 #

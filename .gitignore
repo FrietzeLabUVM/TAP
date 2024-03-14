@@ -8,3 +8,4 @@ subout.txt
 slurm*out
 tap_latest.sif
 testing/test_outputs
+deployed_job_scripts
